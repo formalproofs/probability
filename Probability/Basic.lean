@@ -47,7 +47,8 @@ variable {p x y : ℚ}
 
 @[simp]
 theorem of_complement ( hp : Prob p) : Prob (1-p) := by
-        simp_all only [ Prob, sub_nonneg, tsub_le_iff_right, le_add_iff_nonneg_right, and_self]
+          simp_all
+        --simp_all only [ Prob, sub_nonneg, tsub_le_iff_right, le_add_iff_nonneg_right, and_self]
 
 @[simp]
 theorem complement_inv_nneg (hp : Prob p) : 0 ≤ (1-p)⁻¹ := by simp_all only [Prob, inv_nonneg, sub_nonneg]
@@ -55,6 +56,7 @@ theorem complement_inv_nneg (hp : Prob p) : 0 ≤ (1-p)⁻¹ := by simp_all only
 theorem lower_bound_fst (hp : Prob p) (h : x ≤ y) : x ≤ p * x + (1-p) * y := by
         have h2 : (1-p) * x ≤ (1-p) * y := mul_le_mul_of_nonneg_left h hp.of_complement.1
         linarith
+
 
 theorem lower_bound_snd (hp : Prob p) (h : y ≤ x) : y ≤ p * x + (1-p) * y := by
         have h2 : p * y ≤ p * x := mul_le_mul_of_nonneg_left h hp.1
