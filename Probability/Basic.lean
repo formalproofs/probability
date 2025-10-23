@@ -1,5 +1,3 @@
-
---- Just adding a new line to test git integration ---
 import Mathlib.Data.Nat.Basic
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Rat.Defs
@@ -35,6 +33,8 @@ theorem ind_zero_one (cond : τ → Bool) (ω : τ) : ( (𝕀∘cond) ω = 1)∨
     · right; simp only [Function.comp_apply, h, indicator]
 
 end Indicator
+
+------------- UNH Elites Team Working on Lean Proofs
 
 ---------- Probability Definitions  -----------------------------------------
 
