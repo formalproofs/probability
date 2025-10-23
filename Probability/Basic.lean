@@ -55,7 +55,6 @@ theorem lower_bound_fst (hp : Prob p) (h : x ≤ y) : x ≤ p * x + (1-p) * y :=
         have h2 : (1-p) * x ≤ (1-p) * y := mul_le_mul_of_nonneg_left h hp.of_complement.1
         linarith
 
-
 theorem lower_bound_snd (hp : Prob p) (h : y ≤ x) : y ≤ p * x + (1-p) * y := by
         have h2 : p * y ≤ p * x := mul_le_mul_of_nonneg_left h hp.1
         linarith
