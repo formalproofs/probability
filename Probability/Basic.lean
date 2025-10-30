@@ -33,6 +33,8 @@ theorem ind_zero_one (cond : τ → Bool) : ( (𝕀∘cond) ω = 1) ∨ ((𝕀�
 
 end Indicator
 
+
+
 ---------- Probability Definitions  -----------------------------------------
 
 /-- states that p is a valid probability value -/
