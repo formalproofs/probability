@@ -7,3 +7,4 @@ import Probability.LSimplex
 import Probability.Findist
 import Probability.Finprob
 import Probability.FinRV
+import Probability.Histories
