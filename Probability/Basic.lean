@@ -442,12 +442,8 @@ theorem phead_supp_ne_one (supp : P.supported) : P.phead ≠ 1 :=
            simp [Finprob.phead]
            exact supp
 
-theorem len_ge_one : P.length ≥ 1 :=
-  by simp [Finprob.length]
-     have h := P.prob.nonempty
-     have : P.ℙ.length ≠ 0 := by simp_all only [ne_eq, List.length_eq_zero_iff, not_false_eq_true]
-     exact Nat.one_le_iff_ne_zero.mpr this
 
+ -- len_ge_one is same as length_gt_zero, deleted
 
 theorem shrink_shorter (supp : P.supported) :
                                  (P.shrink supp).length = P.length - 1 :=
@@ -793,7 +789,7 @@ def Finprob.SampleMap (P : Finprob) (m : ℕ) : Type := Fin P.length → Fin m
 variable {ρ : Type} {P : Finprob} {m : ℕ}
 
 instance : CoeOut (Finprob.SampleMap P m) (FinRV (Fin m)) where coe a :=
-           (fun ω ↦ if h : ω < P.length then a ⟨ω, h⟩ else a ⟨0,P.len_ge_one⟩)
+           (fun ω ↦ if h : ω < P.length then a ⟨ω, h⟩ else a ⟨0,P.length_gt_zero⟩)
 
 /-- Defines that the random variable X is measurable with respect to a map
 and a reduced random variable Y
