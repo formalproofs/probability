@@ -9,23 +9,57 @@
 
 \newcommand{\rew}{\tilde{r}^{\mathrm{h}}}
 \newcommand{\why}[1]{\text{[#1]}}
+\newcommand{\todo}{\textcolor{red}{[TODO]}}
 
-\section{Probability Spaces and Expectation} \label{sec:prob-spac-expect}
-
-In this section, we define the basic probability concepts on finite sets.
-
-\subsection{Definitions}
 
 \begin{remark}
 This document omits basic intuitive definitions, such as the comparison or arithmetic operations on random variables. Arithmetic operations on random variables are performed element-wise for each element of the sample set. Please see the Lean file for complete details.
 \end{remark}
+
+\section{Probability}
+
+\subsection{Prelude}
+
+This section sets up some basic tools for working with probabilities. See \texttt{Probability/Prelude.lean}.
+
+\begin{definition} \label{def:probablity-value}
+  A $p\in \Real$ is a probability value when $p \ge 0 \wedge p \le 1$.
+  \lean{Probability.Prob}
+\end{definition}
+
+The lean file also defines several basic properties for \cref{def:probablity-value} which we do not summarize here.
+
+We also need some properties that help us to manipulate lists. 
+\begin{definition}
+A list $L \colon \mathcal{N} \to \tau$ of type $\tau$ and length $N$ is a function defined for $\mathcal{N} := \left\{ 0, \dots , n-1 \right\}$ of type $\tau$.
+\lean{List} 
+\end{definition}
+
+\begin{definition} \label{def:lsimplex}
+A list $L\colon \mathcal{N} \to \tau$ and length $N$
+\end{definition}
+
+
+\subsection{Defs}
+
+This section contains definitions of probability spaces, probability operators, and the expectation operator. See \texttt{Probability/Defs.lean}.
+
+
+
+\subsection{Induction}
+
+This section includes properties that aim to enable one to perform induction on probability spaces. 
+
+\subsection{Basic}
+
+This section states the basic properties of probability spaces, and operators. 
 
 \begin{definition} \label{def:probability-measure}
 A \emph{finite probability measure} $p\colon \Omega \to \Real_+$ on a finite set $\Omega$ is any function that satisfies
 \[
 \sum_{\omega \in \Omega } p(\omega) = 1. 
 \]
-\lean{Finprob} %\leanok
+\lean{Probability.Finprob} \leanok
 \end{definition}
 
 \begin{definition}
@@ -47,6 +81,10 @@ A \emph{random variable} defined on a finite probability space $P$ is a mapping 
 \end{definition}
 
 For the remainder of \cref{sec:prob-spac-expect}, we assume that $P = (\Omega, p)$ is a \emph{finite probability space}. All random variables are defined on the space $P$ unless specified otherwise.
+
+\subsection{OLD CONTENT: TO BE MOVED}
+
+Here, we define probability and expectation operators. 
 
 \begin{definition}
 A \emph{boolean} set is $\mathcal{B} = \left\{ \false, \true \right\}$.
@@ -117,7 +155,6 @@ The \emph{random conditional expectation} of a random variable $\tilde{x} \colon
 The Lean file defines expectations more broadly for a data type $\rho$ which is more general than just $\Real$. The main reason to generalize to both $\Real$ and $\Real_+$. However, in principle, the definitions could be used to reason with expectations that go beyond real numbers and may include other algebras, such as vectors or matrices.
 \end{remark}
 
-\subsection{Basic Properties}
 
 \begin{lemma} \label{lem:ind-and-eq-prod-ind}
 Suppose that $\tilde{b}, \tilde{c} \colon \Omega \to \mathcal{B}$. Then:
@@ -347,17 +384,17 @@ which follows by analyzing two cases. First, when $p(\omega') = 0$, then the equ
   \]
   which completes the step.
 \end{proof}
-% The following proof is simpler but may require some more advanced properties.
-% \begin{proof}[Alternate proof]
-% \begin{align*}
-% \E\left[\E\left[\tilde{x} \mid  \tilde{y}\right] \right]
-% &= \sum_{y\in \mathcal{Y}} \E\left[\tilde{x} \mid \tilde{y} = y \right] \cdot \PP\left[ \tilde{y} = y \right]  \\
-% &= \sum_{y\in \mathcal{Y}} \sum_{x\in \mathcal{X}} x \cdot \PP\left[\tilde{x} = x \mid \tilde{y} = y \right] \cdot \PP\left[ \tilde{y} = y \right]  \\
-% &= \sum_{y\in \mathcal{Y}} \sum_{x\in \mathcal{X}} x \cdot  \PP\left[\tilde{x} = x, \tilde{y} = y \right]   \\
-% &=  \sum_{x\in \mathcal{X}} x \cdot \sum_{y\in \mathcal{Y}} \PP\left[\tilde{x} = x, \tilde{y} = y \right]   \\
-% &=  \sum_{x\in \mathcal{X}} x \cdot  \PP\left[\tilde{x} = x \right]  = \E \left[ \tilde{x} \right].
-% \end{align*}
-% \end{proof}
+The following proof is simpler but may require some more advanced properties.
+\begin{proof}[Alternate proof]
+\begin{align*}
+\E\left[\E\left[\tilde{x} \mid  \tilde{y}\right] \right]
+&= \sum_{y\in \mathcal{Y}} \E\left[\tilde{x} \mid \tilde{y} = y \right] \cdot \PP\left[ \tilde{y} = y \right]  \\
+&= \sum_{y\in \mathcal{Y}} \sum_{x\in \mathcal{X}} x \cdot \PP\left[\tilde{x} = x \mid \tilde{y} = y \right] \cdot \PP\left[ \tilde{y} = y \right]  \\
+&= \sum_{y\in \mathcal{Y}} \sum_{x\in \mathcal{X}} x \cdot  \PP\left[\tilde{x} = x, \tilde{y} = y \right]   \\
+&=  \sum_{x\in \mathcal{X}} x \cdot \sum_{y\in \mathcal{Y}} \PP\left[\tilde{x} = x, \tilde{y} = y \right]   \\
+&=  \sum_{x\in \mathcal{X}} x \cdot  \PP\left[\tilde{x} = x \right]  = \E \left[ \tilde{x} \right].
+\end{align*}
+\end{proof}
 
 \section{Formal Decision Framework}
 
@@ -1068,3 +1105,9 @@ A \emph{Markov policy Bellman operator} $L_k^{\pi}\colon \mathcal{V} \to \mathca
   %\lean{MDPs.v_dp_π}\leanok
 \end{definition}
 
+%%% Local Variables:
+%%% coding: utf-8
+%%% mode: LaTeX
+%%% TeX-master: "print"
+%%% TeX-engine: xetex
+%%% End:
