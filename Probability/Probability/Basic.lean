@@ -162,7 +162,7 @@ theorem pmf_rv_k_ge_1 (h : PMF pmf P L)  : 0 < K := sorry
 
 end PMF
 
------------------------------- Expectaion ---------------------------
+------------------------------ Expectation ---------------------------
 
 namespace Ex
 
