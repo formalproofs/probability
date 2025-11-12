@@ -14,15 +14,23 @@ abbrev Prob (p : ℚ) : Prop := 0 ≤ p ∧ p ≤ 1
 
 namespace Prob
 
-variable {p x y : ℚ} 
+variable {p x y : ℚ}
 
 @[simp]
 theorem of_complement ( hp : Prob p) : Prob (1-p) := by
         simp_all only [ Prob, sub_nonneg, tsub_le_iff_right, le_add_iff_nonneg_right, and_self]
 
 @[simp]
-theorem complement_inv_nneg (hp : Prob p) : 0 ≤ (1-p)⁻¹ := by 
+theorem complement_inv_nneg (hp : Prob p) : 0 ≤ (1-p)⁻¹ := by
         simp_all only [Prob, inv_nonneg, sub_nonneg]
+
+-- Requires p < 1 to avoid 1-p = 0
+-- New theorem complement_inv_nneg
+@[simp]
+theorem complement_inv_nneg_NEW (hp : Prob p) (h : p < 1) : 0 ≤ (1-p)⁻¹ := by
+  have : 0 < 1 - p := by linarith
+  simp_all only [Prob, inv_nonneg, sub_nonneg]
+
 
 theorem lower_bound_fst (hp : Prob p) (h : x ≤ y) : x ≤ p * x + (1-p) * y := by
         have h2 : (1-p) * x ≤ (1-p) * y := mul_le_mul_of_nonneg_left h hp.of_complement.1
@@ -165,7 +173,7 @@ theorem iprod_first_of_tail_zero  (hn : L ≠ []) (hz : ∀ p ∈ L.tail, p = 0)
       cases L with
         | nil =>  contradiction
         | cons head tail =>
-          simp; simp at hz; 
+          simp; simp at hz;
           exact iprod_eq_zero_of_zeros B hz
 
 lemma iprodb_true_sum : L.iprodb (fun _ ↦ true) = L.sum :=
