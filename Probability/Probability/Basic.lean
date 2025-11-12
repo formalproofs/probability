@@ -1,6 +1,6 @@
 import Probability.Probability.Induction
 
-/-! 
+/-!
   # Basic properties for probability spaces and expectations
 
 
@@ -9,9 +9,9 @@ import Probability.Probability.Induction
   - Arithmetic manipulations of random variables
   - The law of total probabilities
   - The law of total expectations
--/  
+-/
 
-namespace Finprob 
+namespace Finprob
 
 variable (P : Finprob) (B : FinRV Bool)
 
@@ -64,11 +64,11 @@ theorem ge_zero : ℙ[ B // P ] ≥ 0 := (P.in_prob B).left
 
 theorem le_one : ℙ[ B // P ] ≤ 1 := (P.in_prob B).right
 
-end Finprob 
+end Finprob
 
 ------------------------------ List ---------------------------
 
-namespace List 
+namespace List
 
 variable (B C : FinRV Bool)
 
@@ -107,7 +107,7 @@ end List
 
 
 ------------------------------ Probablity ---------------------------
- 
+
 namespace Pr
 
 variable (P : Finprob) (B : FinRV Bool) (C : FinRV Bool)
@@ -122,12 +122,12 @@ theorem prob_compl_one_minus : ℙ[¬ᵣB // P] = 1 - ℙ[B // P] :=
     by have := prob_compl_sums_to_one P B
        linarith
 
-theorem law_of_total_probs_bool : ℙ[B // P] = ℙ[ B ∧ᵣ C // P] + ℙ[ B ∧ᵣ ¬ᵣC //P] := 
+theorem law_of_total_probs_bool : ℙ[B // P] = ℙ[ B ∧ᵣ C // P] + ℙ[ B ∧ᵣ ¬ᵣC //P] :=
   P.ℙ.law_of_total_probs B C
 
 theorem conditional_total (h : 0 < ℙ[C // P]) : ℙ[B ∧ᵣ C // P] =  ℙ[ B | C // P] * ℙ[ C // P] :=
   by simp [probability_cnd] at ⊢ h
-     have : P.ℙ.iprodb C * (P.ℙ.iprodb C)⁻¹ = 1 := 
+     have : P.ℙ.iprodb C * (P.ℙ.iprodb C)⁻¹ = 1 :=
             Rat.mul_inv_cancel (P.ℙ.iprodb C) (Ne.symm (ne_of_lt h))
      calc
         P.ℙ.iprodb (B ∧ᵣC) = P.ℙ.iprodb (B ∧ᵣC) * 1 := by ring
@@ -136,7 +136,7 @@ theorem conditional_total (h : 0 < ℙ[C // P]) : ℙ[B ∧ᵣ C // P] =  ℙ[ B
 
 
 
-theorem law_total_prbs_cnd  (h1 : 0 < ℙ[C // P]) (h2 : ℙ[C // P] < 1)  
+theorem law_total_prbs_cnd  (h1 : 0 < ℙ[C // P]) (h2 : ℙ[C // P] < 1)
 : ℙ[B // P] = ℙ[B | C // P] * ℙ[ C // P] + ℙ[B | ¬ᵣC // P] * ℙ[¬ᵣC // P] :=
         by have h2' : 0 < ℙ[¬ᵣC // P] := by rw [prob_compl_one_minus]; linarith
            rw [←conditional_total P B C h1]
@@ -156,9 +156,17 @@ namespace PMF
 
 variable {K : ℕ}  {L : FinRV (Fin K)}
 variable {pmf : Fin K → ℚ}
-variable {P : Finprob} 
+variable {P : Finprob}
 
-theorem pmf_rv_k_ge_1 (h : PMF pmf P L)  : 0 < K := sorry
+theorem pmf_rv_k_ge_1 (h : PMF pmf P L)  : 0 < K :=
+  by
+    classical
+    cases K with
+    | zero =>
+        -- eliminate the impossible `Fin 0` value to solve any goal
+        exact Fin.elim0 (L 0)
+    | succ k =>
+        exact Nat.succ_pos _
 
 end PMF
 
@@ -166,13 +174,13 @@ end PMF
 
 namespace Ex
 
-variable {P : Finprob} 
+variable {P : Finprob}
 variable {K : ℕ} {X : FinRV ℚ} {B : FinRV Bool} {L : FinRV (Fin K)}
 
 variable {pmf : Fin K → ℚ}
 
 
-theorem law_total_exp_bool  (h1 : 0 < ℙ[B // P]) (h2 : 0 < ℙ[¬ᵣB // P]) : 
+theorem law_total_exp_bool  (h1 : 0 < ℙ[B // P]) (h2 : 0 < ℙ[¬ᵣB // P]) :
     𝔼[X // P] = 𝔼[X | B // P] * ℙ[B // P] + 𝔼[X | ¬ᵣB // P] * ℙ[¬ᵣB // P] :=
   by
     simp [expect, expect_cnd] at ⊢ h1 h2
@@ -189,24 +197,24 @@ theorem law_total_exp_bool  (h1 : 0 < ℙ[B // P]) (h2 : 0 < ℙ[¬ᵣB // P]) :
 ---- STEP 1:
 
 -- the law of the unconscious statistician (or similar)
-theorem unconc_stat {g : Fin K → ℚ} (h : PMF pmf P L): 
+theorem unconc_stat {g : Fin K → ℚ} (h : PMF pmf P L):
     𝔼[ g ∘ L // P ] = ∑ i : Fin K, (pmf i) * (g i) := sorry
 
--- this proof will rely on the extensional property of function (functions are the same if they 
+-- this proof will rely on the extensional property of function (functions are the same if they
 -- return the same value for the same inputs; for all inputs)
 theorem condexp_pmf : 𝔼[ X |ᵣ L  // P] =  (fun i ↦ 𝔼[ X | (L =ᵣ i) // P]) ∘ L := sorry
 
 theorem expexp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = ∑ i : Fin K, 𝔼[ X | L =ᵣ i // P] * ℙ[ L =ᵣ i // P]   := sorry
 
--- STEP 2: 
+-- STEP 2:
 theorem exp_prod_μ (i : Fin K) : 𝔼[ X | L =ᵣ i // P] * ℙ[ L =ᵣ i // P] = μ P X (𝕀ᵣ B) := sorry
 
--- STEP 3: 
--- proves that μ distributes over the random variables 
+-- STEP 3:
+-- proves that μ distributes over the random variables
 theorem μ_dist (h : Fin K → FinRV ℚ) : ∑ i : Fin K, μ P X (h i) = μ P X (fun ω ↦ ∑ i : Fin K, (h i) ω) := sorry
- 
 
--- TODO: need to sum all probabilities 
+
+-- TODO: need to sum all probabilities
 
 
 -- STAP 4: Prove this theorem
