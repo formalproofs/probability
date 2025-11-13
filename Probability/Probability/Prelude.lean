@@ -24,12 +24,20 @@ theorem of_complement ( hp : Prob p) : Prob (1-p) := by
 theorem complement_inv_nneg (hp : Prob p) : 0 ≤ (1-p)⁻¹ := by
         simp_all only [Prob, inv_nonneg, sub_nonneg]
 
--- Requires p < 1 to avoid 1-p = 0
+-- Requires p < 1 to avoid 1-p = 0 case
 -- New theorem complement_inv_nneg
 @[simp]
 theorem complement_inv_nneg_NEW (hp : Prob p) (h : p < 1) : 0 ≤ (1-p)⁻¹ := by
   have : 0 < 1 - p := by linarith
   simp_all only [Prob, inv_nonneg, sub_nonneg]
+
+  theorem complement_inv_nneg_NEW2 (hp : Prob p) : 0 ≤ (1 - p)⁻¹ := by
+  -- this  therom hande division by zero internally
+  -- Was later use to prove theorem shrink_ge0 which had ealier used theorem complement_inv_nneg
+
+  by_cases h : p = 1 -- Handle the case when p = 1 directly
+  ·  simp [h]  -- If p = 1, we show that (1 - p)⁻¹ is undefined.
+  · simp_all only [Prob, inv_nonneg, sub_nonneg]  -- If p < 1, we proceed with the standard proof
 
 
 theorem lower_bound_fst (hp : Prob p) (h : x ≤ y) : x ≤ p * x + (1-p) * y := by
@@ -117,6 +125,17 @@ theorem shrink_ge0 (h1 : ∀l ∈ L, Prob l) : ∀l ∈ (L.shrink), 0 ≤ l :=
            exact List.scale_nneg_of_nneg (L:=tail) (c:=(1-head)⁻¹) (fun l a ↦ (h1.2 l a).1) hh
 
 
+-- Improved shrink_ge0 with complement_inv_nneg_NEW2
+theorem shrink_ge0_NEW2 (h1 : ∀l ∈ L, Prob l) : ∀l ∈ (L.shrink), 0 ≤ l :=
+    by simp [List.shrink]
+       cases L with
+       | nil => simp_all only [List.not_mem_nil, IsEmpty.forall_iff, implies_true]
+       | cons head tail =>
+           simp_all only [List.mem_cons, Prob, forall_eq_or_imp]
+           have hh : 0 ≤ (1-head)⁻¹ := Prob.complement_inv_nneg_NEW2 h1.1
+           exact List.scale_nneg_of_nneg (L:=tail) (c:=(1-head)⁻¹) (fun l a ↦ (h1.2 l a).1) hh
+
+
 /-- Used to define a probability of a random variable -/
 def iprodb (ℙ : List ℚ) (B : ℕ → Bool) : ℚ :=
     match ℙ with
@@ -124,7 +143,7 @@ def iprodb (ℙ : List ℚ) (B : ℕ → Bool) : ℚ :=
     | head :: tail =>  (B tail.length).rec 0 head + tail.iprodb B
 
 
-/-- Used to define an expectation of a random variable -/
+/--Used to define an expectation of a random variable -/
 def iprod (ℙ : List ℚ) (X : ℕ → ℚ) : ℚ :=
     match ℙ with
     | [] => 0
