@@ -6,45 +6,246 @@
 % the current file can be a simple sequence of \input. Otherwise It
 % can start with a \section or \chapter for instance.
 
-
-\newcommand{\rew}{\tilde{r}^{\mathrm{h}}}
-\newcommand{\why}[1]{\text{[#1]}}
-\newcommand{\todo}{\textcolor{red}{[TODO]}}
+\newcommand{\id}{\operatorname{id}}
 
 
 \begin{remark}
 This document omits basic intuitive definitions, such as the comparison or arithmetic operations on random variables. Arithmetic operations on random variables are performed element-wise for each element of the sample set. Please see the Lean file for complete details.
 \end{remark}
 
+
 \section{Probability}
+
+The treatment of the probability follows mostly the treatment in
+\begin{quote}
+  Deisenroth, M.P., Faisal, A.A. and Ong, C.S. (2021) Mathematics for machine learning.
+\end{quote}
+
+Although this document states that the values are in $\Real$, the lean file is all defined in terms of rational numbers $\mathbb{Q}$ for computability reasons. 
 
 \subsection{Prelude}
 
 This section sets up some basic tools for working with probabilities. See \texttt{Probability/Prelude.lean}.
 
 \begin{definition} \label{def:probablity-value}
-  A $p\in \Real$ is a probability value when $p \ge 0 \wedge p \le 1$.
-  \lean{Probability.Prob}
+A $p\in \Real$ is a \emph{probability value} when $p \ge 0 \wedge p \le 1$.
+\lean{Prob}\leanok
 \end{definition}
 
 The lean file also defines several basic properties for \cref{def:probablity-value} which we do not summarize here.
 
-We also need some properties that help us to manipulate lists. 
 \begin{definition}
-A list $L \colon \mathcal{N} \to \tau$ of type $\tau$ and length $N$ is a function defined for $\mathcal{N} := \left\{ 0, \dots , n-1 \right\}$ of type $\tau$.
-\lean{List} 
+A finite set of natural numbers is defined as $\Nats_n := \left\{ 0, \dots , n-1   \right\}$.
+%\lean{Fin} \leanok
 \end{definition}
 
-\begin{definition} \label{def:lsimplex}
-A list $L\colon \mathcal{N} \to \tau$ and length $N$
+\begin{definition}
+A list $\mathbb{L}_n \colon \Nats_n \to \tau$ of type $\tau$ and length $n$ is a function defined for $\Nats_{n} := \left\{ 0, \dots , n-1 \right\}$ of type $\tau$.
+%\lean{List} \leanok
 \end{definition}
 
+The following definition generalizes the inverse of a function to non-injective function which do not have an inverse. 
+\begin{definition}[Preimage]
+The \emph{preimage} $f^{-1}\colon \mathcal{Y} \to \mathcal{X}$ of a function $f\colon \mathcal{X} \to \mathcal{Y}$ is defined as
+\begin{equation} \label{eq:preimage-set}
+f^{-1}(y) := \left\{ x \in \mathcal{X} \mid  f(x) = y \right\} .
+\end{equation}
+%\lean{Probability.Preimage} \leanok
+\end{definition}
 
 \subsection{Defs}
 
 This section contains definitions of probability spaces, probability operators, and the expectation operator. See \texttt{Probability/Defs.lean}.
+\begin{definition}
+A \emph{finite probability distribution} $\Delta(n)$ for $n\in \Nats$ is defined as
+\[
+\Delta_n := \left\{ p \in \mathbb{L}_n \mid  \sum_{i \in \Nats_n} p_i = 1, p_i \ge 0, \forall i \in \Nats_n \right\}.
+\]
+We call a probability distribution \emph{degenerate} if $p_i = 1$ for some $i$; otherwise the probability distribution is \emph{supported}.
+%\lean{Probability.Finprob} \leanok
+\end{definition}
+
+The formal model we use to represent random events and processes is the following.
+\begin{definition}[Complete Probability Space] \label{def:probability-space}
+  A \emph{complete probability space} consists of:
+  \begin{enumerate}
+  \item A sample space $\Omega := \Nats_n$, which is the set of all possible outcomes. 
+  \item An \emph{implicit} event space $\mathcal{F} := 2^{\Omega}$, which we do not define explicitly in Lean. 
+  \item A probability function $\mathbb{P} \in \Delta_N$ that satisfies that
+  \begin{enumerate}
+  \item $\mathbb{P}(\Omega) = 1$
+  \item $\mathbb{P}(A_1 \cup A_2) = \mathbb{P}(A_1) + \mathbb{P}(A_2)$ for all $A_1, A_2\in \mathcal{F}$ such that $A_1 \cap A_2 = \emptyset$.
+  \end{enumerate}
+  \end{enumerate}
+%\lean{Probability.Finprob} \leanok
+\end{definition}
+The notation $2^{\Omega}$ in \cref{def:probability-space} represents the power set of $\Omega$.
+
+The set $\mathcal{F}$ is often, but not always, the power set of $\Omega$. One reason it may not be a power set is that it is necessary when $\Omega$ is infinite; see Borel sets. Another reason to define $\mathcal{F}$ that is not a power set is to denote the available information. We will see an example of this later. Unless specified otherwise, we assume that the event set for a finite sample space is its power set and the $\sigma$-algebra of $\Real$ is the Borel set.
+
+\begin{definition}[Measure]
+  The measure $\PP [\mathcal{S}]$ of the set $\mathcal{S} \subseteq \Nats$ given a probability space is defined as
+  \[
+   \PP [\mathcal{S}] := \sum_{i \in \Omega} \mathbb{I}[ i\in \mathcal{S} ].
+ \]
+ The definition requires that the set is decidable. 
+ %\lean{Probability.Finprob.measure}
+\end{definition}
 
 
+\begin{example} \label{exm:probability-space}
+ Suppose I want to model the behavior of coin flips. I have a coin that is equally likely to come up heads and tails. I flip the coin twice. One possible probability space would be
+  \begin{enumerate}
+  \item $\Omega := \left\{ \mathrm{HH}, \mathrm{HT}, \mathrm{TH}, \mathrm{TT} \right\}$.
+  \item $\mathcal{F} := 2^{\Omega } = \left\{ \emptyset, \Omega, \left\{ \mathrm{HH} \right\}, \left\{ \mathrm{HH}, \mathrm{HT} \right\}, \dots  \right\}$.
+  \item $P(\left\{ \mathrm{HH} \right\}) := \frac{1}{4},  P(\left\{ \mathrm{HH}, \mathrm{HT} \right\}) := \frac{1}{2}$. The probabilities of other sets are derived using the properties in \cref{def:probability-space}.
+  \end{enumerate}
+\end{example}
+
+
+For the sake of completeness, we include also the notion of measurability. However, since we are only concerned with complete probability spaces, all random variables we define will be measurable. 
+\begin{definition} \label{def:preimage-measurable}
+A function $f\colon \mathcal{X} \to \mathcal{Y}$ with $\sigma$-algebras $\mathcal{D} \subseteq 2^{\mathcal{X}}$ and $\mathcal{E} \subseteq 2^{\mathcal{Y}}$ is \emph{measurable} when the \emph{pre-image} of each $E\in \mathcal{E}$ is in $\mathcal{D}$:
+  \[
+    f^{-1}(E) \in \mathcal{D}.
+  \]
+Here, the application to $f^{-1}$ to a set $E \subseteq \mathcal{Y}$ is defined as:
+\begin{equation} 
+f^{-1}(E) := \bigcup_{e \in E} f^{-1}(e) .
+\end{equation}
+\end{definition}
+The measurability in the definition of random variables is required for us to reason about their probability distributions.
+
+\begin{definition}[Random Variable]
+  A \emph{random variable} is a measurable function $\tilde{x}\colon \Nats \to \mathcal{Y}$ where $\mathcal{Y}$ is a measurable set. Note that the way we define random variables, they are independent of a particular probability space. The measurability requirement is vacuous in probability spaces.
+  %\lean{Probability.FinRV} \leanok
+\end{definition}
+When manipulating random variables we denote them with a tilde, such as $\tilde{x}, \tilde{s}$. This corresponds to the common practice to use uppercase letters to denote random variables. We drop the tilde when treating the random variable as an ordinary function. 
+
+\todo{We could get a lot of mileage from treating random variables as vectors. Expectation and probability are then linear operators on this vector space of random variables. This is only possible when using a complete vector space. Question: Do we need finiteness for this? That is, do random variables need to be defined for a finite $\Omega$?}
+
+
+\begin{remark}
+We define some ad-hoc operations on random variables. However, it would be better to treat them as a vector space. Then probability and expectation can be seen as linear operators on this vector space. 
+
+Other notable definition is that the equality with a scalar $\tilde{x} = x_0$ is interpreted as a boolean random variable $\tilde{b}: \mathbb{B} \to \left\{ 0,1 \right\}$ :
+\[
+  b(\omega) := (\tilde{x} = x_0)(\omega) := \mathbb{I}[ x(\omega) = x_0].
+\]
+
+\end{remark}
+
+We use the operator (function) $\mathbb{P}$ denote the probability of the set of sample space that corresponds to a given condition. We use a non-standard definition for convenience (and show that this definition equals to the standard one later).
+\begin{definition}
+For any complete probability space, $(\Omega, \mathcal{F}, P)$ and a random variable $\tilde{b}\colon \Omega \to \mathbb{B}$, the operator $\PP$ is defined as
+\[
+\PP\left[ \tilde{b} \right] := \sum_{i\in \Omega} \mathbb{P}(i) b(i),
+\]
+where the boolean is interpreted as $0$ for false and $1$ for true. 
+%\lean{Probability.Probability.probability}
+\end{definition}
+The definition can be seen as an inner product between the probabilities and the random variable. 
+
+The following theorem shows that our definition of a probability operator is equal to the standard definition.
+\begin{theorem}
+  For any probability space, $(\Omega, \mathcal{F}, P)$ and a random variable $\tilde{b}\colon \Omega \to \mathbb{B}$: 
+  \[
+   \PP\left[\tilde{b} \right] := \mathbb{P}[b^{-1}(\true)]. 
+ \]
+ %%\lean{Probability.prob\_iprod\_eq\_def} \leanok
+\end{theorem}
+
+\emph{Probability distributions} are typically defined for random variables. The distribution of a random variable is characterized by the \emph{cumulative distribution function}~(CDF), defined as follows.
+\begin{definition}[CDF]
+  The \emph{cumulative distribution function} $F_{\tilde{x}}\colon \Real \to [0,1]$ of a real-valued random variable $\tilde{x}\colon \Omega \to \Real$ is defined as
+  \[
+   F_{\tilde{x}}(x) := \PP\left[\tilde{x} \le x\right], \qquad \forall x\in \Real. 
+  \]
+\end{definition}
+
+
+Some random variables also have a \emph{probability density function}~(PDF), and discrete random variables have a \emph{probability mass function}~(PMF). In this class, we will be primarily dealing with discrete random variables.
+\begin{definition}[PMF]
+The \emph{probability mass function} $p_{\tilde{x}}\colon \mathcal{E} \to [0,1]$ for a discrete random variable $\tilde{x}\colon \Omega  \to  \mathcal{E}$ with a finite $\mathcal{E}$ is defined as
+  \[
+    p_{\tilde{x}}(e) := \PP\left[\tilde{x} = e\right], \qquad \forall e\in \mathcal{E} .
+ \]
+%\lean{Probability.Probability.PMF} 
+\end{definition}
+
+
+\begin{definition} \label{def:joint-probability}
+The \emph{joint probability} of two random variables $\tilde{x}\colon \Omega \to \mathcal{X}$ and $\tilde{y} \colon \Omega \to \mathcal{Y}$ is defined as
+\[
+ \PP\left[\tilde{x} = x, \tilde{y} = y\right] := \PP\left[\tilde{x} = x \wedge \tilde{y} = y\right] , \forall  x\in \mathcal{X}, y\in \mathcal{Y}.
+\]
+One can also define a joint PMF for two discrete random variables $p_{\tilde{x}, \tilde{y}}(x,y)$ for $x\in \mathcal{X}$ and $y\in \mathcal{Y}$ as
+\[
+ p_{\tilde{x}, \tilde{y}}(x,y) = \PP\left[\tilde{x} = x, \tilde{y} = y\right]. 
+\]
+\end{definition}
+
+\begin{definition} \label{def:probability_cnd}
+The \emph{conditional probability} of $\tilde{b}\colon \Omega \to \mathbb{B}$ on $\tilde{c}\colon \Omega \to \mathbb{B}$ is defined as
+\[
+\PP\left[ \tilde{b} \mid  \tilde{c} \right]  := \frac{ \PP[\tilde{b} \wedge \tilde{c} ] }{ \PP \left[ \tilde{c} \right]}
+\]
+%%\lean{Probability.Probability.probability\_cnd}
+\end{definition}
+
+\begin{definition}[Independent RV]
+  Events $A,B \in \mathcal{F}$ are independent when
+  \[
+   \PP[ A \cap B ] = \PP[ A ] \cdot \PP[ B ].
+  \]
+  Random variables $\tilde{x}\colon \Omega \to \mathcal{X}$ and $\tilde{y}\colon \Omega \to \mathcal{Y}$ are \emph{independent} when
+  \[
+    F_{\tilde{x}, \tilde{y}}(x,y) = F_{\tilde{x}}(x) \cdot F_{\tilde{y}}(y),
+    \forall x\in \mathcal{X}, y\in \mathcal{Y}.
+  \]
+\end{definition}
+Discrete random variables $\tilde{x}$ and $\tilde{y}$ are independent if and only if
+\[
+  \PP\left[\tilde{x} = x, \tilde{y} = y\right] = \PP\left[\tilde{x} = x\right] \cdot \PP\left[\tilde{y} = y\right], \forall x\in \mathcal{X}, y\in \mathcal{Y}.
+\]
+
+
+The expectation of a random variable is its mean. As with probabilities, we use a non-standard definition for the sake of computational convenience and then show that it is equivalent to the common definition of probabilities. 
+\begin{definition}[Expected Value] \label{def:expectation}
+Suppose that $\tilde{x}\colon \Omega \to \Real $ is a random variable and that $x(\Omega) := \left\{ x(\omega) \mid  \omega \in \Omega  \right\}$ is finite. Then
+\[ 
+ \E\left[\tilde{x}\right] := \sum_{\omega \in \Omega }  x(\omega) \cdot  \PP(\omega).
+\]
+\end{definition}
+
+The following theorem shows that our definition of expected value is equal to the standard definition of expected values. 
+\begin{theorem}[Expected Value] \label{def:expectation}
+Suppose that $\tilde{x}\colon \Omega \to \Real $ is a random variable and that $x(\Omega) := \left\{ x(\omega) \mid  \omega \in \Omega  \right\}$ is finite. Then
+\[ 
+ \E\left[\tilde{x}\right] = \sum_{x\in \tilde{x}(\Omega)}  x\cdot \PP\left[\tilde{x} = x\right].
+\]
+%%\lean{Probability.Probability.exp\_eq\_correct}
+\end{theorem}
+In general probability spaces, the expectation is defined using the Lebesgue integral:
+\[
+ \E\left[\tilde{x}\right] := \int_{\Omega} \tilde{x} \, dP,
+\]
+which is equivalent to the form in the theorem above in finite probability spaces.  
+
+Some of the most important properties of expectations are as follows.
+\begin{theorem}
+  Assume $\tilde{x},\tilde{y}\colon \Omega \to \Real$ and $c\in \Real $. Then:
+  \begin{align*}
+    \E\left[c\cdot \tilde{x}\right] &= c \cdot  \E\left[\tilde{x}\right]\\
+    \E\left[\tilde{x} + \tilde{y}\right] &= \E\left[\tilde{x}\right] + \E\left[\tilde{y}\right]\\
+    \E\left[\tilde{x} \cdot \tilde{y}\right] &= \E\left[\tilde{x}\right] \cdot \E\left[\tilde{y}\right] \quad \text{for independent } \tilde{x}, \tilde{y}.
+  \end{align*}
+\end{theorem}
+
+\begin{definition}
+A \emph{random variable} defined on a finite probability space $P$ is a mapping $\tilde{x}\colon \Omega \to \Real$.
+%\lean{FinRV} \leanok
+\end{definition}
 
 \subsection{Induction}
 
@@ -59,26 +260,17 @@ A \emph{finite probability measure} $p\colon \Omega \to \Real_+$ on a finite set
 \[
 \sum_{\omega \in \Omega } p(\omega) = 1. 
 \]
-\lean{Probability.Finprob} \leanok
+%\lean{Probability.Finprob} \leanok
 \end{definition}
 
-\begin{definition}
-The set of \emph{finite probability measures} $\Delta(\Omega)$ for a finite $\Omega$ is defined as
-\[
-\Delta(\Omega) := \left\{ p\colon \Omega \to \Real_+ \mid  \sum_{\omega \in \Omega } p(\omega) = 1 \right\}.
-\]
-%\lean{Delta} \leanok
-\end{definition}
 
-\begin{definition} \label{def:probability-space}
-A \emph{finite probability space} is $P = (\Omega, p)$, where $\Omega$ is a finite set referred to as the \emph{sample set}, $p\in \Delta(\Omega)$, and the $\sigma$-algebra is $2^{\Omega}$.
-%\lean{Finprob} \leanok
-\end{definition}
+\begin{theorem}[Law of the unconscious statistician] \label{thm:unconscious}
+  For any discrete $\tilde{x}\colon \Omega \to \Real$ and $g\colon \Real \to \Real$:
+  \[
+    \E\left[g(\tilde{x})\right] = \sum_{x\in \mathcal{X}} g(x) \cdot  \PP\left[\tilde{x} = x\right].
+  \]
+\end{theorem}
 
-\begin{definition}
-A \emph{random variable} defined on a finite probability space $P$ is a mapping $\tilde{x}\colon \Omega \to \Real$.
-%\lean{Finrv} \leanok
-\end{definition}
 
 For the remainder of \cref{sec:prob-spac-expect}, we assume that $P = (\Omega, p)$ is a \emph{finite probability space}. All random variables are defined on the space $P$ unless specified otherwise.
 
@@ -87,8 +279,8 @@ For the remainder of \cref{sec:prob-spac-expect}, we assume that $P = (\Omega, p
 Here, we define probability and expectation operators. 
 
 \begin{definition}
-A \emph{boolean} set is $\mathcal{B} = \left\{ \false, \true \right\}$.
-%\lean{Bool} \leanok
+A \emph{boolean} set is $\mathbb{B} = \left\{ \false, \true \right\}$.
+%%\lean{Bool} \leanok
 \end{definition}
 
 \begin{definition} \label{def:expect}
@@ -96,11 +288,11 @@ The \emph{expectation} of a random variable $\tilde{x} \colon \Omega \to \Real$ 
 \[
 \E \left[ \tilde{x} \right] := \sum_{\omega \in \Omega } p(\omega ) \cdot \tilde{x}(\omega).
 \]
-%\lean{Finprob.expect} \leanok
+%%\lean{Finprob.expect} \leanok
 \end{definition}
 
 \begin{definition} \label{def:indicator}
-An \emph{indicator} function $\I \colon \mathcal{B} \to \left\{ 0, 1 \right\}$ is defined for $b\in \mathcal{B}$ as
+An \emph{indicator} function $\I \colon \mathbb{B} \to \left\{ 0, 1 \right\}$ is defined for $b\in \mathbb{B}$ as
 \[
 \I(b) :=
 \begin{cases}
@@ -108,34 +300,19 @@ An \emph{indicator} function $\I \colon \mathcal{B} \to \left\{ 0, 1 \right\}$ i
 0 &\text{if } b = \operatorname{false}.
 \end{cases}
 \]
-%\lean{Finprob.indicator} \leanok
-\end{definition}
-
-\begin{definition} \label{def:probability}
-The \emph{probability} of $\tilde{b}\colon \Omega \to \mathcal{B}$ is defined as
-\[
-\PP\left[ \tilde{b} \right] := \E\left[\I(\tilde{b})\right].
-\]
-%\lean{Finprob.probability}
+%\lean{Probability.Probability.indicator} \leanok
 \end{definition}
 
 \begin{definition} \label{def:expect-cnd}
-The \emph{conditional expectation} of $\tilde{x} \colon \Omega \to \Real$ conditioned on $\tilde{b} \colon \Omega \to \mathcal{B}$ is defined as
+The \emph{conditional expectation} of $\tilde{x} \colon \Omega \to \Real$ conditioned on $\tilde{b} \colon \Omega \to \mathbb{B}$ is defined as
 \[
 \E \left[ \tilde{x} \mid  \tilde{b} \right] :=
 \frac{1}{\PP[\tilde{b}]} \E \left[  \tilde{x} \cdot \I \circ \tilde{b} \right],
 \]
 where we define that $x / 0 = 0$ for each $x\in \Real$.
-%\lean{Finprob.expect_cnd} \leanok
+%%\lean{Finprob.expect_cnd} \leanok
 \end{definition}
 
-\begin{definition} \label{def:probability_cnd}
-The \emph{conditional probability} of $\tilde{b}\colon \Omega \to \mathcal{B}$ on $\tilde{c}\colon \Omega \to \mathcal{B}$ is defined as
-\[
-\PP\left[ \tilde{b} \mid  \tilde{c} \right]  :=
-\E \left[ \I(\tilde{b}) \mid  \tilde{c} \right].
-\]
-\end{definition}
 
 \begin{remark}
 It is common to prohibit conditioning on a zero probability event both for expectation and probabilities. In this document, we follow the Lean convention, where the division by $0$ is $0$; see \texttt{div\_zero}. However, even some basic probability and expectation results may require that we assume that the conditioned event does not have probability zero for it to hold. 
@@ -148,7 +325,7 @@ The \emph{random conditional expectation} of a random variable $\tilde{x} \colon
 :=
 \E \left[ \tilde{x} \mid  \tilde{y} = \tilde{y}(\omega) \right], \quad \forall \omega \in \Omega.
 \]
-%\lean{Finprob.expect_cnd_rv} \leanok
+%%\lean{Finprob.expect_cnd_rv} \leanok
 \end{definition}
 
 \begin{remark}
@@ -157,7 +334,7 @@ The Lean file defines expectations more broadly for a data type $\rho$ which is 
 
 
 \begin{lemma} \label{lem:ind-and-eq-prod-ind}
-Suppose that $\tilde{b}, \tilde{c} \colon \Omega \to \mathcal{B}$. Then:
+Suppose that $\tilde{b}, \tilde{c} \colon \Omega \to \mathbb{B}$. Then:
 \[
 \I \left( \tilde{b} \wedge \tilde{c} \right) = \I ( \tilde{b} ) \cdot  \I ( \tilde{c} ),  
 \]
@@ -165,7 +342,7 @@ where the equality applies for all $\omega \in \Omega$.
 \end{lemma}
 
 \begin{theorem} \label{thm:exp-zero-cond}
-Suppose that $\tilde{c} \colon \Omega \to \mathcal{B}$ such that $\PP\left[ \tilde{c} \right] = 0$. Then for any $\tilde{x} \colon \Omega \to \Real$:
+Suppose that $\tilde{c} \colon \Omega \to \mathbb{B}$ such that $\PP\left[ \tilde{c} \right] = 0$. Then for any $\tilde{x} \colon \Omega \to \Real$:
 \[
 \E \left[ \tilde{x} \mid \tilde{c} \right] = 0.
 \]
@@ -175,7 +352,7 @@ Immediate from the definition and the fact that $0 \cdot  x = 0$ for $x\in \Real
 \end{proof}
 
 \begin{theorem} \label{thm:prob-zero-cond}
-Suppose that $\tilde{c} \colon \Omega \to \mathcal{B}$ such that $\PP\left[ \tilde{c} \right] = 0$. Then for any $\tilde{b} \colon \Omega \to \Real$:
+Suppose that $\tilde{c} \colon \Omega \to \mathbb{B}$ such that $\PP\left[ \tilde{c} \right] = 0$. Then for any $\tilde{b} \colon \Omega \to \Real$:
 \[
 \PP\left[ \tilde{b} \mid \tilde{c} \right] = 0.
 \]
@@ -185,7 +362,7 @@ Immediate from \cref{thm:exp-zero-cond}.
 \end{proof}
 
 \begin{theorem} \label{thm:prob-eq-prob-cond-prob}
-Suppose that $\tilde{b}, \tilde{c} \colon \Omega \to \mathcal{B}$, then
+Suppose that $\tilde{b}, \tilde{c} \colon \Omega \to \mathbb{B}$, then
 \[
 \PP \left[ \tilde{b} \wedge \tilde{c} \right] 
 =
@@ -248,7 +425,7 @@ Suppose that $\tilde{x} \colon \Omega \to \Real$ and $c\in \Real$. Then
 \[
 \E \left[ c + \tilde{x} \right] = c + \E \left[ \tilde{x} \right].
 \]
-%\lean{Finprob.exp_add_const}
+%%\lean{Finprob.exp_add_const}
 \end{theorem}
 \begin{proof}
   From \cref{thm:exp-add-rv,thm:exp-const}.
@@ -260,7 +437,7 @@ Suppose that $\tilde{x}, \tilde{y} \colon \Omega \to \Real$ and $\tilde{z}\colon
 \[
 \E \left[ \tilde{y} \mid \tilde{z} \right](\omega) = c + \E \left[ \tilde{x} \mid  \tilde{z} \right](\omega), \quad \forall \omega \in \Omega.
 \]
-%\lean{Finprob.exp_cnd_rv_add_const}
+%%\lean{Finprob.exp_cnd_rv_add_const}
 \end{theorem}
 \begin{proof}
 From \cref{thm:exp-add-const}.
@@ -275,7 +452,7 @@ From \cref{thm:exp-add-const}.
   \[
    \E\left[\tilde{x}\right] \ge \E\left[\tilde{y}\right] .
   \]
- %\lean{Finprob.exp_monotone}
+ %%\lean{Finprob.exp_monotone}
 \end{theorem}
 
 
@@ -288,7 +465,7 @@ From \cref{thm:exp-add-const}.
   \[
    \E \left[ \tilde{x} \right] = \E \left[ \tilde{z} \right].
   \]
-%\lean{Finprob.exp_congr}
+%%\lean{Finprob.exp_congr}
 \end{theorem}
 \begin{proof}
 Immediately from the congruence of sums.
@@ -302,7 +479,7 @@ Let $\tilde{x} \colon \Omega \to \Real $ be a random variable. Then:
 =
 \sum_{x\in \tilde{x}(\Omega)} \PP \left[ \tilde{x} = x \right] \cdot  x. 
 \]
-%\lean{Finprob.exp_sum_val}
+%%\lean{Finprob.exp_sum_val}
 \end{theorem}
 \begin{proof}
 Let $\mathcal{X} := \tilde{x}(\Omega)$, which is a finite set. Then:
@@ -325,7 +502,7 @@ Let $\tilde{x} \colon \Omega \to \Real$ and $\tilde{b} \colon \Omega \to \mathca
   =
   \sum_{x\in \tilde{x}(\Omega)} \PP \left[ \tilde{x} = x \mid \tilde{b}  \right] \cdot x.
 \]
-%\lean{Finprob.exp_sum_val_cnd}
+%%\lean{Finprob.exp_sum_val_cnd}
 \end{theorem}
 
 \begin{theorem} \label{thm:exp-sum-val-cnd-rv}
@@ -336,7 +513,7 @@ Let $\tilde{x} \colon \Omega \to \Real$ and $\tilde{y} \colon \Omega \to \mathca
   \sum_{y\in \mathcal{Y}} \E \left[ \tilde{x} \mid  \tilde{y} = y \right] \cdot
                        \PP\left[ \tilde{y} = y \right].
 \]
-%\lean{Finprob.exp_sum_val_cnd_rv}
+%%\lean{Finprob.exp_sum_val_cnd_rv}
 \end{theorem}
 
 
@@ -344,11 +521,11 @@ Let $\tilde{x} \colon \Omega \to \Real$ and $\tilde{y} \colon \Omega \to \mathca
 
 
 \begin{theorem}[Law of Total Probability] \label{thm:total-probability}
-Let $\tilde{b} \colon \Omega \to \mathcal{B}$ and $\tilde{y} \colon \Omega \to \mathcal{Y}$ be random variables with a finite set $\mathcal{Y}$. Then:
+Let $\tilde{b} \colon \Omega \to \mathbb{B}$ and $\tilde{y} \colon \Omega \to \mathcal{Y}$ be random variables with a finite set $\mathcal{Y}$. Then:
 \[
 \sum_{y\in \mathcal{Y}} \PP\left[\tilde{b} \wedge (\tilde{y} = y) \right] = \PP \left[ \tilde{b} \right].
 \]
-%\lean{Finprob.total_expectation}
+%%\lean{Finprob.total_expectation}
 \end{theorem}
 
 
@@ -357,7 +534,7 @@ Let $\tilde{x} \colon \Omega \to \mathcal{X}$ and $\tilde{y} \colon \Omega \to \
 \[
 \E\left[\E\left[\tilde{x} \mid  \tilde{y}\right]\right] = \E \left[ \tilde{x} \right].
 \]
-%\lean{Finprob.total_expectation}
+%%\lean{Finprob.total_expectation}
 \end{theorem}
 \begin{proof}
 Recall that we are allowing the division by 0 and assume that $x / 0 = 0$.
@@ -400,22 +577,30 @@ The following proof is simpler but may require some more advanced properties.
 
 \subsection{Markov Decision Process}
 
+\newcommand{\Fin}{\operatorname{Fin}}
+
 \begin{definition} \label{def:MDP}
-A \emph{Markov decision process} $M := (\mathcal{S}, \mathcal{A}, P, r)$ consists of a finite nonempty set of states $\mathcal{S}$, a finite nonempty set of actions $\mathcal{A}$, transition function $P\colon \mathcal{S} \times \mathcal{A} \to  \Delta(\mathcal{S})$, and a reward function $r \colon \mathcal{S} \times \mathcal{A} \times \mathcal{S} \to \Real$.
+A \emph{Markov decision process} $M := (S, A, P, r)$ consists of:
+\begin{itemize}
+  \item a positive integer $S \in \Nats_{>0}$ representing the number of states, with index set $\Fin(S) = \{0,1, \dots, S-1\}$
+  \item a positive integer $A \in \Nats_{>0}$ representing the number of actions, with index set $\Fin(A) = \{0,1, \dots, A-1\}$
+  \item a transition function $P \colon \Fin(S) \times \Fin(A) \to \Delta(\Fin(S))$, mapping each state–action pair to finite probability distribution over next states
+  \item a reward function $r \colon \Fin(S) \times \Fin(A) \times \Fin(S) \to \Real$, mapping each transition \((s,a,s')\) to a real number
+\end{itemize}
 %\lean{MDPs.MDP} \leanok
 \end{definition}
 
 \subsection{Histories}
 
-We implicitly assume in the remainder of the section an MDP $M = (\mathcal{S}, \mathcal{A}, p, r)$.
+We implicitly assume in the remainder of the section an MDP $M = (S, A, P, r)$.
 \begin{definition} \label{def:Hist}
 A \emph{history} $h$ in a set of histories $\mathcal{H}$ is a sequence of states and actions defined for $M$ recursively as
 \[
-  h := \langle s \rangle, \quad
+  h := \langle s_0 \rangle, \quad
   \why{or} \quad
-  h := \langle h', s, a \rangle,
+  h := \langle h', a, s \rangle,
 \]
-where $s \in \mathcal{S}$, $a\in \mathcal{A}$, and $h'\in \mathcal{H}$.
+where $s_0, s \in \Fin(S)$, $a \in \Fin(A)$, and $h'\in \mathcal{H}$.
 %\lean{MDPs.Hist} \leanok
 \end{definition}
 
@@ -432,7 +617,7 @@ The set $\mathcal{H}_{\mathrm{NE}}$ of \emph{non-empty histories} is
 \[
 \mathcal{H}_{\mathrm{NE}} := \left\{ h \in \mathcal{H} \mid  |h| \ge 1 \right\}.
 \]
-%\lean{MDPs.HistNE} \leanok
+%%\lean{MDPs.HistNE} \leanok
 \end{definition}
 
 \begin{definition}\label{def:histories}
@@ -455,7 +640,7 @@ The set $\mathcal{H}_{\mathrm{NE}}$ of \emph{non-empty histories} is
       \left\{ \langle h, a, s\rangle \mid h \in \mathcal{H}_{t-1}, a\in \mathcal{A}, s\in \mathcal{S} \right\} &text{otherwise}.
     \end{cases}
   \]
-  %\lean{MDPs.HistoriesHorizon} \leanok
+  %%\lean{MDPs.HistoriesHorizon} \leanok
 \end{definition}
 
 \begin{theorem} \label{thm:hist-lenth-eq-horizon}
@@ -463,7 +648,7 @@ The set $\mathcal{H}_{\mathrm{NE}}$ of \emph{non-empty histories} is
   \[
    |h'| = |h| + t, \qquad \forall h'\in \mathcal{H}(h, t).
   \]
-%\lean{MDPs.hist_lenth_eq_horizon} 
+%%\lean{MDPs.hist_lenth_eq_horizon} 
 \end{theorem}
 \begin{proof}
 The theorem follows by induction on $t$ from the definition.  
@@ -471,12 +656,12 @@ The theorem follows by induction on $t$ from the definition.
 
 \begin{definition}
   We use $\tilde{s}_k\colon \mathcal{H} \to \mathcal{S}$ to denote the 0-based $k$-th state of each history.
-  %\lean{MDPs.state}\leanok
+  %%\lean{MDPs.state}\leanok
 \end{definition}
 
 \begin{definition}
   We use $\tilde{a}_k\colon \mathcal{H} \to \mathcal{A}$ to denote the 0-based $k$-th action of each history.
-  %\lean{MDPs.action}\leanok
+  %%\lean{MDPs.action}\leanok
 \end{definition}
 
 \begin{definition} \label{def:reward}
@@ -484,34 +669,34 @@ The \emph{history-reward} random variable $\rew\colon \mathcal{H} \to \Real$ for
 \[
 \rew(h) := r(s_{|h|}(h'), a, s) + r_{\mathrm{h}}(h').
 \]
-%\lean{MDPs.reward} \leanok
+%%\lean{MDPs.reward} \leanok
 \end{definition}
 
 \begin{definition}\label{reward_at}
 The \emph{history-reward} random variable $\rew_k \colon \mathcal{H} \to \Real$ for $h = \langle h', a, s \rangle \in  \mathcal{H}$ for $h'\in \mathcal{H}$, $a\in \mathcal{A}$, and $s\in \mathcal{S}$ is defined as the $k$-th reward (0-based) of a history.
-%\lean{MDPs.reward_at} \leanok
+%%\lean{MDPs.reward_at} \leanok
 \end{definition}
 
 \begin{definition}\label{reward_to}
 The \emph{history-reward} random variable $\rew_{\le k} \colon \mathcal{H} \to \Real$ for $h = \langle h', a, s \rangle \in  \mathcal{H}$ for $h'\in \mathcal{H}$, $a\in \mathcal{A}$, and $s\in \mathcal{S}$ is defined as the sum of all $k$-th or earlier rewards (0-based) of a history.
-%\lean{MDPs.reward_to} \leanok
+%%\lean{MDPs.reward_to} \leanok
 \end{definition}
 
 \begin{definition}\label{reward_from}
 The \emph{history-reward} random variable $\rew_{\ge k}\colon \mathcal{H} \to \Real$ for $h = \langle h', a, s \rangle \in  \mathcal{H}$ for $h'\in \mathcal{H}$, $a\in \mathcal{A}$, and $s\in \mathcal{S}$ is defined as the sum of $k$-th or later reward (0-based) of a history.
-%\lean{MDPs.reward_from} \leanok
+%%\lean{MDPs.reward_from} \leanok
 \end{definition}
 
 \subsection{Policies}
 
 \begin{definition} \label{def:decision-rule}
 The set of \emph{decision rules} $\mathcal{D}$ is defined as \(\mathcal{D} := \mathcal{A}^{\mathcal{S}}. \) A single action $a \in \mathcal{A}$ can also be interpreted as a decision rule $\mathcal{d} := s \mapsto a$.
-%\lean{MDPs.DecisionRule}\leanok
+%%\lean{MDPs.DecisionRule}\leanok
 \end{definition}
 
 \begin{definition} \label{def:policy-hr}
 The set of \emph{history-dependent policies} is \(\PiHR :=  \Delta(\mathcal{A})^{\mathcal{H}}. \)
-%\lean{MDPs.PolicyHR} \leanok
+%%\lean{MDPs.PolicyHR} \leanok
 \end{definition}
 
 
@@ -522,7 +707,7 @@ A Markov deterministic policy $\pi \in \PiMD$ can also be interpreted as $\bar{\
   \bar{\pi}(h) := \delta \left[  \pi(|h|, s_{|h|}(h)) \right],
 \]
 where $\delta$ is the Dirac distribution,  and $s_{|h|}$ is the history's last state.
-%\lean{MDPs.PolicyMD}\leanok
+%%\lean{MDPs.PolicyMD}\leanok
 \end{definition}
 
 \begin{definition} \label{def:policy-sd}
@@ -532,7 +717,7 @@ A stationary policy $\pi \in \Pi_{\mathrm{SD}}$ can be interpreted as $\bar{\pi}
   \bar{\pi}(h) := \delta \left[  \pi(s_{|h|}(h)) \right],
 \]
 where $\delta$ is the Dirac distribution and $s_{|h|}$ is the history's last state.
-%\lean{MDPs.PolicySD}\leanok
+%%\lean{MDPs.PolicySD}\leanok
 \end{definition}
 
 \subsection{Distribution}
@@ -548,7 +733,7 @@ p_{T-1}^{\mathrm{h}}(h', \pi) \cdot \pi(h',a) \cdot  p(s_{|h|}(h'), a , s) &\tex
 \end{cases}
 \]
 Moreover, the function $p^{\mathrm{h}}$ maps policies to correct probability distribution.
-%\lean{MDPs.HistDist} \leanok
+%%\lean{MDPs.HistDist} \leanok
 \end{definition}
 
 TODO: This definition needs to be updated. 
@@ -577,19 +762,19 @@ The \emph{history-dependent expectation} is defined for each $t\in \Nats$, $\pi\
 \end{equation*}
 In the $\E$ operator above, the random variable $\tilde{x}$ lives in a probability space $(\Omega, p)$ where $\Omega = \mathcal{H}(\hat{h}, t)$ and $p(h) = p^{\mathrm{h}}(h, \pi), \forall h\in \Omega$.
 Moreover, if $\hat{h}$ is a state, then it is interpreted as a history with the single initial state.
-%\lean{MDPs.expect_h} \leanok
+%%\lean{MDPs.expect_h} \leanok
 \end{definition}
 
 
 \begin{definition}\label{def:expect-h-cnd}
-The \emph{history-dependent expectation} is defined for each $t\in \Nats$, $\pi\in \PiHR$, $\hat{h}\in \mathcal{H}$, $\tilde{x}\colon \mathcal{H} \to \Real$, $\tilde{b}\colon \mathcal{H} \to \mathcal{\mathcal{B}}$ as
+The \emph{history-dependent expectation} is defined for each $t\in \Nats$, $\pi\in \PiHR$, $\hat{h}\in \mathcal{H}$, $\tilde{x}\colon \mathcal{H} \to \Real$, $\tilde{b}\colon \mathcal{H} \to \mathcal{\mathbb{B}}$ as
 \begin{equation*}
 \E^{\hat{h}, \pi, t} [\tilde{x} \mid \tilde{b} ]
 := \E \left[ \tilde{x} \mid  \tilde{b} \right].
 \end{equation*}
 In the $\E$ operator above, the random variables $\tilde{x}$ and $\tilde{b}$ live in a probability space $(\Omega, p)$ where $\Omega = \mathcal{H}(\hat{h}, t)$ and $p(h) = p^{\mathrm{h}}(h, \pi), \forall h\in \Omega$.
 Moreover, if $\hat{h}$ is a state, then it is interpreted as a history with the single initial state.
-%\lean{MDPs.expect_h_cnd} \leanok
+%%\lean{MDPs.expect_h_cnd} \leanok
 \end{definition}
 
 \begin{definition}\label{def:expect-h-cnd-rv}
@@ -600,7 +785,7 @@ The \emph{history-dependent expectation} is defined for each $t\in \Nats$, $\pi\
 \end{equation*}
 In the $\E$ operator above, the random variables $\tilde{x}$ and $\tilde{h}$ live in a probability space $(\Omega, p)$ where $\Omega = \mathcal{H}(\hat{h}, t)$ and $p(h) = p^{\mathrm{h}}(h, \pi), \forall h\in \Omega$.
 Moreover, if $\hat{h}$ is a state, then it is interpreted as a history with the single initial state.
-%\lean{MDPs.expect_h_cnd_rv} \leanok
+%%\lean{MDPs.expect_h_cnd_rv} \leanok
 \end{definition}
 
 
@@ -614,7 +799,7 @@ Assume $\tilde{x} \colon \mathcal{H} \to \Real$ and $c \in \Real$. Then $\forall
   =
   c + \E^{\hat{h}, \pi, t} \left[ \tilde{x} \right].
 \]
-%\lean{MDPs.exph_congr} \leanok
+%%\lean{MDPs.exph_congr} \leanok
 \end{theorem}
 \begin{proof}
 Directly from \cref{thm:exp-congr}. 
@@ -627,7 +812,7 @@ Suppose that $\tilde{x}, \tilde{y} \colon \mathcal{H} \to \Real $. Then $\forall
   =
   \E^{\hat{h}, \pi, t} \left[ \tilde{x} \right] + \E^{\hat{h}, \pi, t} \left[ \tilde{y} \right].
 \]
-%\lean{MDPs.exph_add_rv}
+%%\lean{MDPs.exph_add_rv}
 \end{theorem}
 \begin{proof}
   From \cref{thm:exp-add-rv}.
@@ -638,7 +823,7 @@ Suppose that $c\in \Real$. Then $\forall h\in \mathcal{H}, \pi\in \PiHR, t \in \
 \[
   \E^{\hat{h}, \pi, t} \left[ c \right] = c.
 \]
-%\lean{MDPs.exph_const}
+%%\lean{MDPs.exph_const}
 \end{theorem}
 \begin{proof}
   From \cref{thm:exp-const}.
@@ -651,7 +836,7 @@ Suppose that $\tilde{x}, \tilde{y} \colon \mathcal{H} \to \Real $ satisfy that $
   =
   c + \E^{\hat{h}, \pi, t} \left[ \tilde{y} \right].
 \]
-%\lean{MDPs.exph_add_const} 
+%%\lean{MDPs.exph_add_const} 
 \end{theorem}
 \begin{proof}
 From \cref{thm:exp-add-const}.
@@ -665,7 +850,7 @@ For each $\hat{h}\in \mathcal{H}$, $\pi \in \PiHR$, and $t\in \Nats$:
 \E^{\hat{h}, \pi, t} \left[ \sum_{k=0}^{|\tilde{\id}|-1}  r(\tilde{s}_k, \tilde{a}_k, \tilde{s}_{k+1}) \right],
 \]
 where $\tilde{\id}(h)$ is the identity function, $|\cdot|$ is the length of a history (0-based), $\tilde{s}_k\colon \mathcal{H} \to \mathcal{S}$ and $\tilde{a}_k\colon \mathcal{H} \to \mathcal{A}$ are the 0-based $k$-th state and action, respectively of each history.
-%\lean{MDPs.expret_eq_sum_rew} \leanok
+%%\lean{MDPs.expret_eq_sum_rew} \leanok
 \end{theorem}
 \begin{proof}
 Follows from \cref{thm:exph-congr} and the equality of the reward function $\tilde{r}^{\mathrm{h}}$ and the sum in the expectation.
@@ -679,7 +864,7 @@ For each $h\in \mathcal{H}$, $\pi \in \PiHR$, and $t\in \Nats$:
 \rew(h) + \E^{h, \pi, t} \left[ \rew_{\ge k_0} \right],
 \]
 where $k_0:=|h|$.
-  %\lean{MDPs.sum_rew_eq_sum_rew_rg }
+  %%\lean{MDPs.sum_rew_eq_sum_rew_rg }
 \end{theorem}
 \begin{proof}
 Follows from \cref{thm:exph-add-const}.
@@ -693,7 +878,7 @@ For each $\hat{h}\in \mathcal{H}$, $\pi \in \PiHR$, $t\in \Nats$, $h\in \mathcal
   \E^{\hat{h}, \pi, t} \left[ \rew_{k_0} \mid  \tilde{s}_{k_0}, \tilde{a}_{k_0}\right](h) = \rew_{k_0}(h), \forall h \in \mathcal{H}.
 \end{equation*}
 where $k_0:= |\hat{h}|$.
-%\lean{MDPs.sum_rew_eq_sum_rew_rg }
+%%\lean{MDPs.sum_rew_eq_sum_rew_rg }
 \end{theorem}
 \begin{proof}
  From \cref{thm:exp-const}. 
@@ -710,7 +895,7 @@ Then
 \E^{s_0,\pi,1}\left[ \tilde{f} \right].
 \]
 \end{theorem}
-%\lean{MDPs.exph_horizon_trim }
+%%\lean{MDPs.exph_horizon_trim }
 \begin{proof}
   Directly from the definition of the expectation.
 \end{proof}
@@ -724,7 +909,7 @@ Then
     =
     \E^{h, \pi, t} \left[ \tilde{x} \right].
   \]
-%\lean{MDPs.total_expectation_h}
+%%\lean{MDPs.total_expectation_h}
 \end{theorem}
 \begin{proof}
 From \cref{thm:total-expectation}.
@@ -739,7 +924,7 @@ Suppose that the random variable $\tilde{x}\colon \mathcal{H} \to \Real$ satisfi
  \[
   \E^{h,\pi,t} \left[ \tilde{x} \right]  = \E^{h,\pi,k} \left[  \tilde{x} \right].
  \]
- %%\lean{MDPs.exp_horizon_cut}
+ %%%\lean{MDPs.exp_horizon_cut}
 \end{theorem}
 
 
@@ -752,7 +937,7 @@ For each $\beta >0$, $h\in \mathcal{H}$, $\pi\in \PiHR$, $t\in \Nats$, $\tilde{x
   =
   \E^{\langle h, a, s\rangle,\pi,t}[\tilde{x}],
 \]
-%\lean{MDPs.exph_cond_eq_hist}
+%%\lean{MDPs.exph_cond_eq_hist}
 \end{theorem}
 \begin{proof}
   Let
@@ -765,18 +950,18 @@ For each $\beta >0$, $h\in \mathcal{H}$, $\pi\in \PiHR$, $t\in \Nats$, $\tilde{x
   \]
   where the inequality holds from the hypothesis. Also, let
   \[
-    \mathcal{B} := \left\{ h'\in \Omega_{h,t+1} \mid a_{|h|}(h') = a \wedge s_{|h|+1}(h') = s\right\}.
+    \mathbb{B} := \left\{ h'\in \Omega_{h,t+1} \mid a_{|h|}(h') = a \wedge s_{|h|+1}(h') = s\right\}.
   \]
   Note that
   \begin{equation} \label{eq:set-equivalence}
-    \mathcal{B} = \Omega_{\left< h', a, s \right>, t},
+    \mathbb{B} = \Omega_{\left< h', a, s \right>, t},
 \end{equation}
   which can be seen by algebraic manipulation from \eqref{eq:omega-def}.
 
   Using the notation above, we can show the result as
   \begin{align*}
   \E^{h,\pi,t+1}[\tilde{x} \mid \tilde{a}_{|h|} = a, \tilde{s}_{|h|+1} = s]
-  &= \frac{1}{b} \sum_{h'\in \mathcal{B}} \hat{p}_{h,\pi}(h') \cdot x(h')
+  &= \frac{1}{b} \sum_{h'\in \mathbb{B}} \hat{p}_{h,\pi}(h') \cdot x(h')
   && \why{definition}\\
   &= \frac{1}{b} \sum_{h'\in \Omega_{\left< h', a, s \right>, t}} \hat{p}_{h,\pi}(h') \cdot x(h')
   && \why{\cref{eq:set-equivalence}} \\
@@ -805,7 +990,7 @@ The main idea of the proof is to:
 
 \begin{definition} \label{def:ObjectiveFH}
   A finite horizon objective definition is given by $O := (s_0, T)$ where $s_0\in \mathcal{S}$ is the initial state and $T\in \Nats$ is the horizon.
-  %\lean{MDPs.ObjectiveFH} \leanok
+  %%\lean{MDPs.ObjectiveFH} \leanok
 \end{definition}
 
 In the reminder of the section, we assume an objective $O = (s_0, T)$.
@@ -816,7 +1001,7 @@ In the reminder of the section, we assume an objective $O = (s_0, T)$.
     :=
     \E^{s_0, \pi, T} \left[\rew \right].
   \]
-  %\lean{MDPs.objective_fh} \leanok
+  %%\lean{MDPs.objective_fh} \leanok
 \end{definition}
 
 \begin{definition}\label{def:optimal-fh}
@@ -824,7 +1009,7 @@ In the reminder of the section, we assume an objective $O = (s_0, T)$.
   \[
    \rho(\pi\opt, O) \ge \rho(\pi, O), \quad \forall \pi \in \PiHR.
  \]
- %\lean{MDPs.OptimalVF_fh} \leanok
+ %%\lean{MDPs.OptimalVF_fh} \leanok
 \end{definition}
 
 \begin{definition} \label{def:values-h}
@@ -832,7 +1017,7 @@ In the reminder of the section, we assume an objective $O = (s_0, T)$.
   \[
    \mathcal{U} := \Real^{\mathcal{H}}.
  \]
- %\lean{MDPs.ValuesH} \leanok
+ %%\lean{MDPs.ValuesH} \leanok
 \end{definition}
 
 \begin{definition} \label{def:u-pi}
@@ -840,7 +1025,7 @@ A \emph{history-dependent policy value function} $\hat{u}^{\pi}_t\colon \mathcal
   \[
    \hat{u}^{\pi}_t(h) := \E^{h, \pi, t} \left[ \rew_{\ge |h|} \right],
  \]
- %\lean{MDPs.hvalue_π} \leanok
+ %%\lean{MDPs.hvalue_π} \leanok
 \end{definition}
 
 
@@ -857,12 +1042,12 @@ For each $t\in \Nats$, a policy $\pi\opt \in \PiHR$ is optimal if
 \[
    \hat{u}_t^{\pi\opt}(h) \ge \hat{u}_t^{\pi}(h), \quad \forall \pi \in \PiHR, h\in \mathcal{H}.
  \]
- %\lean{MDPs.Optimal_fh}\leanok
+ %%\lean{MDPs.Optimal_fh}\leanok
 \end{definition}
 
 \begin{theorem} \label{def:optimalvf-imp-optimal}
 A policy $\pi\opt \in \PiHR$ optimal in \cref{def:optimal-fh} is also optimal in \cref{def:optimal-fh} for any initial state $s_0$ and horizon $T$.
-%\lean{MDPs.optimalvf_imp_optimal}
+%%\lean{MDPs.optimalvf_imp_optimal}
 \end{theorem}
 
 \subsection{History-dependent Dynamic Program}
@@ -877,7 +1062,7 @@ The \emph{history-dependent policy Bellman operator} $L_{\mathrm{h}}^{\pi} \colo
     \E^{h, \pi, 1} \left[ \rew_{|h|} + \tilde{u} \right], \quad \forall h\in \mathcal{H}, \tilde{u} \in \mathcal{U},
   \]
   where the value function $\tilde{u}$ is interpreted as a random variable on defined on the sample space $\Omega = \mathcal{H}$.
-  %\lean{MDPs.DPhπ} \leanok
+  %%\lean{MDPs.DPhπ} \leanok
 \end{definition}
 
 \begin{definition}\label{def:DPhopt} 
@@ -888,7 +1073,7 @@ The \emph{history-dependent optimal Bellman operator} $L_{\mathrm{h}}\opt \colon
     \max_{a\in \mathcal{A}} \E^{h, a, 1} \left[ \rew_{|h|} + \tilde{u} \right], \quad \forall h\in \mathcal{H}, \tilde{u} \in \mathcal{U},
   \]
   where the value function $\tilde{u}$ is interpreted as a random variable on defined on the sample space $\Omega = \mathcal{H}$.
-  %\lean{MDPs.DPhopt}\leanok
+  %%\lean{MDPs.DPhopt}\leanok
 \end{definition}
 
 \begin{definition} \label{def:u-dp-pi}
@@ -900,7 +1085,7 @@ The \emph{history-dependent optimal Bellman operator} $L_{\mathrm{h}}\opt \colon
      L_{\mathrm{h}}^{\pi} u_{t-1}^{\pi} &\text{otherwise}.
    \end{cases}
  \]
- %\lean{MDPs.u_dp_π}\leanok
+ %%\lean{MDPs.u_dp_π}\leanok
 \end{definition}
 
 \begin{definition} \label{def:u-dp-opt}
@@ -912,7 +1097,7 @@ The \emph{history-dependent optimal Bellman operator} $L_{\mathrm{h}}\opt \colon
      L_{\mathrm{h}}\opt u_{t-1}\opt &\text{otherwise}.
    \end{cases}
  \]
- %\lean{MDPs.u_dp_opt}\leanok
+ %%\lean{MDPs.u_dp_opt}\leanok
 \end{definition}
 
 \begin{lemma}\label{thm:dp-opt-ge-dp-pi}
@@ -922,7 +1107,7 @@ The \emph{history-dependent optimal Bellman operator} $L_{\mathrm{h}}\opt \colon
    (L_{\mathrm{h}}^{\pi} u^2)(h), \quad \forall \pi\in \PiHR, h\in \mathcal{H}.
   \]
 \end{lemma}
-%\lean{MDPs.dp_opt_ge_dp_pi}
+%%\lean{MDPs.dp_opt_ge_dp_pi}
 \begin{proof}
   From \cref{thm:exp-monotone}.
 \end{proof}
@@ -935,7 +1120,7 @@ For each $\pi\in \PiHR$ and $t\in \Nats$:
     =
     u^{\pi}_t(h), \quad \forall h\in \mathcal{H}.
   \]
-  %\lean{MDPs.dph_correct_vf }
+  %%\lean{MDPs.dph_correct_vf }
 \end{theorem}
 \begin{proof}
 By induction on $t$. The base case for $t=0$ follows from the definition. The inductive case for $t + 1$ follows for each $h\in \mathcal{H}$ when $|h| = k_0$ as
@@ -964,7 +1149,7 @@ For each $t\in \Nats$:
     \ge 
     \hat{u}_t(h; \pi), \quad \forall h\in \mathcal{H}, \pi\in \PiHR.
   \]
-  %\lean{MDPs.dph_opt_vf_opt}
+  %%\lean{MDPs.dph_opt_vf_opt}
 \end{theorem}
 \begin{proof}
   By induction on $t$. The base case is immediate. The inductive case follows for $t+1$ as follows. For each $\pi\in \PiHR$:
@@ -985,7 +1170,7 @@ We discuss results needed to prove the optimality of Markov policies.
 
 \begin{definition} \label{def:Values}
   The set of \emph{independent value functions} is defined as $\mathcal{V} := \Real^{\mathcal{S}}$.
-  %\lean{MDPs.Values}\leanok
+  %%\lean{MDPs.Values}\leanok
 \end{definition}
 
 \begin{definition}\label{def:DPMopt}
@@ -994,7 +1179,7 @@ A \emph{Markov Bellman operator} $L\opt\colon \mathcal{V} \to \mathcal{V}$ is de
 (L\opt  v)(h)  :=
 \max_{a\in \mathcal{A}} \E^{h, a, 1} \left[ \rew + v(\tilde{s}_{|h|}) \right], \quad \forall \tilde{u} \in \mathcal{U},
 \]
-%\lean{MDPs.DPMopt}\leanok
+%%\lean{MDPs.DPMopt}\leanok
 \end{definition}
 
 \begin{definition} \label{def:v-dp-opt}
@@ -1006,7 +1191,7 @@ v\opt_t :=
     (L\opt  v\opt _{t-1}) &\text{otherwise}.
 \end{cases}
 \]
-%\lean{MDPs.v_dp_opt}\leanok
+%%\lean{MDPs.v_dp_opt}\leanok
 \end{definition}
 
 \begin{theorem}
@@ -1014,7 +1199,7 @@ Suppose that $t\in \Nats $. Then:
 \[
 v\opt_t(s_{|h|}(h)) = u\opt_t(h), \quad \forall h\in \mathcal{H}.
 \]
-%\lean{MDPs.v_dp_opt_eq_u_opt} 
+%%\lean{MDPs.v_dp_opt_eq_u_opt} 
 \end{theorem}
 \begin{proof}
 By induction on $t$. The base case follows immediately from the definition. The inductive step for $t+1$ follows as:
@@ -1044,7 +1229,7 @@ By induction on $t$. The base case follows immediately from the definition. The 
     \end{cases}
   \]
   where $a_0$ is an arbitrary action.
-  %\lean{MDPs.πopt}\leanok
+  %%\lean{MDPs.πopt}\leanok
 \end{definition}
 
 \begin{theorem}
@@ -1053,7 +1238,7 @@ Assume a horizon $T\in \Nats$. Then:
   v\opt_{T-|h|}(s_{|h|}(h)) = u^{\pi\opt_{T-h}}_{T-|h|}(h), \quad
   \forall h\in \left\{ h\in \mathcal{H} \mid |h| \le T \right\}.
 \]
-%\lean{MDPs.v_dp_opt_eq_u_opt} 
+%%\lean{MDPs.v_dp_opt_eq_u_opt} 
 \end{theorem}
 \begin{proof}
 Fix some $T \in \Nats$. By induction on $k$ from $k = T$ to $k=0$. The base case is immediate from the definition. We prove the inductive case for $k-1$ from $k$ as
@@ -1080,7 +1265,7 @@ We discuss results pertinent to the evaluation of Markov policies.
 Markov value functions depend on the length of the history.
 \begin{definition} \label{def:ValuesM}
   The set of \emph{independent value functions} is defined as $\mathcal{V}_{\mathrm{M}} := \Real^{\Nats \times \mathcal{S}}$.
-  %\lean{MDPs.ValuesM}\leanok
+  %%\lean{MDPs.ValuesM}\leanok
 \end{definition}
 
 
@@ -1090,7 +1275,7 @@ A \emph{Markov policy Bellman operator} $L_k^{\pi}\colon \mathcal{V} \to \mathca
 (L^{\pi} v)(k, s)  :=
 \max_{a\in \mathcal{A}} \E^{s, a, 1} \left[ \rew + v(k + 1, \tilde{s}_{|h|}) \right], \quad \forall v\in \mathcal{V}_{\mathrm{M}}, k\in \Nats, s\in \mathcal{S}.
 \]
-%\lean{MDPs.DPMopt}\leanok
+%%\lean{MDPs.DPMopt}\leanok
 \end{definition}
 
 \begin{definition} \label{def:v-dp-pi}
@@ -1102,12 +1287,12 @@ A \emph{Markov policy Bellman operator} $L_k^{\pi}\colon \mathcal{V} \to \mathca
       (L^{\pi}  v^{\pi}_{t-1}) &\text{otherwise}.
     \end{cases}
   \]
-  %\lean{MDPs.v_dp_π}\leanok
+  %%\lean{MDPs.v_dp_π}\leanok
 \end{definition}
 
 %%% Local Variables:
 %%% coding: utf-8
 %%% mode: LaTeX
 %%% TeX-master: "print"
-%%% TeX-engine: xetex
+%%% TeX-engine: luatex
 %%% End:

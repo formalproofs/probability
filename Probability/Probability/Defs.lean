@@ -74,6 +74,9 @@ variable (P : Finprob)
 @[simp]
 def length := P.ℙ.length
 
+/-- Computes a measure of a set with a decidable membership -/
+def measure (S : Set ℕ) (d : (i : ℕ) → Decidable (i ∈ S)) := P.ℙ.iprod (fun i ↦ if i ∈ S then 1 else 0)  
+
 def singleton : Finprob :=
    ⟨ [1], LSimplex.singleton ⟩
 
@@ -89,7 +92,6 @@ theorem not_degen_supp (supp : ¬P.degenerate) : P.supported :=
 
 theorem degen_of_not_supp (notsupp : ¬P.supported) : P.degenerate :=
   by simp_all [Finprob.degenerate, Finprob.supported]
-
 
 theorem nonempty : ¬P.ℙ.isEmpty :=
   by intro a;
@@ -132,15 +134,21 @@ theorem len_ge_one : P.length ≥ 1 :=
 
 end Finprob
 
-
 section RandomVariable
+-- TODO: Can we define random variables as Finsupp (finitely supported functions) or Fin -> τ?
+-- TODO: Or, better, define random variables as a Vector Space, or a Module. 
+-- see, for example:  https://leanprover-community.github.io/mathlib4_docs/Mathlib/RingTheory/Finiteness/Defs.html#Module.Finite
+-- see also: https://github.com/leanprover-community/mathlib4/blob/8666bd82efec40b8b3a5abca02dc9b24bbdf2652/Mathlib/Data/Fin/VecNotation.lean
+
 
 /--  Random variable defined on a finite probability space (bijection to ℕ) -/
-
-def FinRV (ρ : Type) := ℕ → ρ
-
+@[simp]
+def FinRV  (ρ : Type) := ℕ → ρ
 
 namespace FinRV
+
+variable {n : ℕ}
+
 @[simp]
 def and (B : FinRV Bool) (C : FinRV Bool) : FinRV Bool :=
     fun ω ↦ B ω && C ω
@@ -190,6 +198,10 @@ def add {η : Type} [HAdd η η η] (X Y : FinRV η) : FinRV η :=
 
 infix:30 " +ᵣ " => FinRV.add
 
+/-- Defines a preimage of an RV. This is a set with a decidable membership. -/
+def preimage {τ : Type} (f : FinRV τ)  : τ → Set ℕ := 
+  fun t => { n : ℕ | f n  = t}
+
 end FinRV
 
 /-- Boolean indicator function -/
@@ -206,6 +218,7 @@ theorem ind_zero_one (cond : τ → Bool) : ( (𝕀∘cond) ω = 1) ∨ ((𝕀�
 
 abbrev 𝕀ᵣ (B : FinRV Bool) : FinRV ℚ := fun ω ↦ 𝕀 (B ω)
 
+
 end RandomVariable
 
 
@@ -218,11 +231,14 @@ variable (P : Finprob) (B C : FinRV Bool)
 /-- Probability of B -/
 def probability : ℚ :=  P.ℙ.iprodb B
 
+
 notation "ℙ[" B "//" P "]" => probability P B
+
+-- TODO: the sorry in the definition has to do with the decidability of the membership
+theorem prob_iprod_eq_def : ℙ[ B // P ] = P.measure (B.preimage true) sorry := sorry
 
 /-- Conditional probability of B -/
 def probability_cnd : ℚ := ℙ[ B ∧ᵣ C // P ] / ℙ[ C // P ]
-
 
 theorem true_one : ℙ[ fun _ ↦ true // P] = 1 :=
     by simp only [probability]; rw [List.iprodb_true_sum] 
@@ -258,7 +274,11 @@ notation "𝔼[" X "//" P "]" => expect P X
 -- expectation for a joint probability space and random variable
 notation "𝔼[" PX "]" => expect PX.1 PX.2
 
-/-- This is a non-normalized expectation -/
+theorem exp_eq_correct : 𝔼[X // P ] = ∑ v ∈ ((List.finRange P.length).map X).toFinset, v * ℙ[ X =ᵣ v // P] 
+:= sorry
+
+
+/-- This is a non-normalized conditional expectation. The term μ is analogous to μ in measure theory  -/
 def μ : ℚ := P.ℙ.iprod (X *ᵣ Y) 
 
 /-- Conditional expectation -/

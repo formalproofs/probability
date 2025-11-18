@@ -9,8 +9,11 @@
 % sense only for the web version, such as dependency graph
 % macros.
 
+\usepackage[framemethod=tikz]{mdframed}
 
-\newcommand{\lean}[1]{(\emph{LEAN}: \texttt{#1})}
+\usepackage{thmtools}
+
+\newcommand{\lean}[1]{\textcolor{blue}{(\emph{LEAN}: \texttt{#1})}}
 \newcommand{\discussion}[1]{}
 \newcommand{\leanok}{}
 \newcommand{\mathlibok}{}
@@ -18,6 +21,7 @@
 
 \DeclareMathOperator{\true}{true}
 \DeclareMathOperator{\false}{false}
+% \DeclareMathOperator{\id}{id}
 
 % Make sure that arguments of \uses and \proves are real labels, by using invisible refs:
 % latex prints a warning if the label is not defined, but nothing is shown in the pdf file.
@@ -30,5 +34,20 @@
  {\clist_map_inline:nn{#1}{\vphantom{\ref{##1}}}%
   \ignorespaces}
 \ExplSyntaxOff
+
+% Theorems and such
+\mdfdefinestyle{theoremstyle}{%
+    roundcorner=5pt, % round corners, makes it friendlier
+    leftmargin=1pt, rightmargin=1pt, % this helps with box warnings
+    hidealllines=false, % even friendlier
+    align = center, %
+}
+
+
+\surroundwithmdframed[style=theoremstyle,backgroundcolor=gray!15]{definition}
+\surroundwithmdframed[style=theoremstyle,backgroundcolor=gray!15]{theorem}
+\surroundwithmdframed[style=theoremstyle,backgroundcolor=gray!15]{lemma}
+\surroundwithmdframed[style=theoremstyle,backgroundcolor=gray!15]{proposition}
+
 
 

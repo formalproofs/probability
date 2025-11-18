@@ -1,6 +1,14 @@
 import Probability.Probability.Induction
 
+<<<<<<< HEAD
 /-!
+=======
+import Mathlib.Algebra.BigOperators.Fin
+import Mathlib.Algebra.BigOperators.Group.Finset.Basic
+import Mathlib.Data.Fintype.BigOperators
+
+/-! 
+>>>>>>> 9dcec97150465f7d5eaf41ac0164b3aecb0daf68
   # Basic properties for probability spaces and expectations
 
 
@@ -189,28 +197,55 @@ theorem law_total_exp_bool  (h1 : 0 < ℙ[B // P]) (h2 : 0 < ℙ[¬ᵣB // P]) :
 ---- STEP 1:
 
 -- the law of the unconscious statistician (or similar)
+<<<<<<< HEAD
 theorem unconc_stat {g : Fin K → ℚ} (h : PMF pmf P L):
+=======
+theorem LOTUS {g : Fin K → ℚ} (h : PMF pmf P L): 
+>>>>>>> 9dcec97150465f7d5eaf41ac0164b3aecb0daf68
     𝔼[ g ∘ L // P ] = ∑ i : Fin K, (pmf i) * (g i) := sorry
 
 -- this proof will rely on the extensional property of function (functions are the same if they
 -- return the same value for the same inputs; for all inputs)
 theorem condexp_pmf : 𝔼[ X |ᵣ L  // P] =  (fun i ↦ 𝔼[ X | (L =ᵣ i) // P]) ∘ L := sorry
 
-theorem expexp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = ∑ i : Fin K, 𝔼[ X | L =ᵣ i // P] * ℙ[ L =ᵣ i // P]   := sorry
+theorem expexp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = ∑ i : Fin K, 𝔼[ X | L =ᵣ i // P] * ℙ[ L =ᵣ i // P] := sorry
 
+<<<<<<< HEAD
 -- STEP 2:
 theorem exp_prod_μ (i : Fin K) : 𝔼[ X | L =ᵣ i // P] * ℙ[ L =ᵣ i // P] = μ P X (𝕀ᵣ B) := sorry
+=======
+-- STEP 2: 
+theorem exp_prod_μ (i : Fin K) : 𝔼[ X | L =ᵣ i // P] * ℙ[ L =ᵣ i // P] = μ P X (𝕀ᵣ (L =ᵣ i)) := sorry
+>>>>>>> 9dcec97150465f7d5eaf41ac0164b3aecb0daf68
 
 -- STEP 3:
 -- proves that μ distributes over the random variables
 theorem μ_dist (h : Fin K → FinRV ℚ) : ∑ i : Fin K, μ P X (h i) = μ P X (fun ω ↦ ∑ i : Fin K, (h i) ω) := sorry
+<<<<<<< HEAD
+=======
+ 
+theorem fin_sum : ∀ ω : ℕ, ∑ i : Fin K, (𝕀ᵣ (L =ᵣ i)) ω = 1 := sorry
+
+theorem exp_eq_exp_cond_true : 𝔼[X // P] = μ P X (fun ω ↦ 1 ) := sorry 
+
+>>>>>>> 9dcec97150465f7d5eaf41ac0164b3aecb0daf68
 
 
 -- TODO: need to sum all probabilities
 
 
--- STAP 4: Prove this theorem
-theorem law_total_exp : 𝔼[ X // P] = 𝔼[ 𝔼[ X |ᵣ L // P] // P ] := sorry
-
+example {f g : ℕ → ℚ} {m : ℕ} (h : ∀ n : ℕ, f n = g n) : ∑ i : Fin m, f i = ∑ i : Fin m, g i := 
+    by apply Finset.sum_congr
+       · simp
+       · simp_all  
+  
+-- STEP 4: We now use the results above to prove the law of total expectations
+theorem law_total_exp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = 𝔼[ X // P] := 
+  calc
+    𝔼[𝔼[X |ᵣ L // P] // P ] = ∑ i : Fin K, 𝔼[ X | L =ᵣ i // P ] * ℙ[ L =ᵣ i // P] := expexp
+    _ =  ∑ i : Fin K, μ P X (𝕀ᵣ (L =ᵣ i)) := by apply Fintype.sum_congr; exact exp_prod_μ 
+    _ =  μ P X (fun ω ↦  ∑ i : Fin K, (𝕀ᵣ (L =ᵣ i)) ω) :=  μ_dist fun i => 𝕀ᵣ (L=ᵣi)
+    _ =  μ P X (fun ω ↦  1) :=  by conv => lhs; congr; rfl; rfl; intro ω; exact fin_sum ω
+    _ = 𝔼[X // P]  := exp_eq_exp_cond_true.symm
 
 end Ex
