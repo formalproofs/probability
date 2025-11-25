@@ -78,13 +78,3 @@ theorem prod_eq_zero_of_nneg_dp_zero (hx : 0 ≤ x) (hy : 0 ≤ y) : x ⬝ᵥ y 
   have := Left.mul_nonneg hx hy
   simp_all [dotProduct]
   exact (Fintype.sum_eq_zero_iff_of_nonneg this).mp h
-
-
-theorem dotProduct_pos_monotone (hx: x ≥ 0) (hyz: y ≥ z) : x ⬝ᵥ y ≥ x ⬝ᵥ z := by
-    have h1: y-z ≥ 0 := by
-        calc y-z ≥ z-z := by rel[hyz]
-            _ = 0 := by ring
-    have h2: (y-z) ⬝ᵥ x ≥ 0 := by sorry
-    sorry
-    --apply sub_dotProduct
-end dotProduct
