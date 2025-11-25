@@ -151,7 +151,7 @@ theorem law_total_prbs_cnd  (h1 : 0 < ℙ[C // P]) (h2 : ℙ[C // P] < 1)
 variable {K : ℕ}  {L : FinRV (Fin K)}
 
 theorem law_of_total_probs : ∑ i : Fin K, ℙ[ B ∧ᵣ (L =ᵣ i) // P ] = ℙ[B // P] := sorry
-
+  
 end Pr
 
 ------------------------------ Expectation ---------------------------
