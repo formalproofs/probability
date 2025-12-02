@@ -84,4 +84,13 @@ notation "CVaR[" α "," X "//" P "]" => CVaR P X α
 -- CVaR ≥ VaR: CVaR[α, X // P] ≥ VaR[α, X // P]
 
 
+
+theorem VaR_monotone_in_alpha
+  (P : Findist n) (X : FinRV n ℚ)
+  {α₁ α₂ : ℚ} (h0 : 0 ≤ α₁) (h12 : α₁ ≤ α₂) (h1 : α₂ ≤ 1) : VaR P X α₁ ≤ VaR P X α₂ :=
+  by
+    simp [VaR]
+    sorry
+
+
 end Risk
