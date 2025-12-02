@@ -588,11 +588,12 @@ E[|X|]=0 \Longleftrightarrow P(\{\omega\in\Omega:X(\omega)=0\})=1.
 \textit{Proof of ($\Leftarrow$):} Assume $P(X=0)=1$.
 If $P(X=0)=1$, then $P(X\neq0)=0$.
 In discrete terms: $p_i=0$ for all $\omega_i$ such that $X_i\neq0$.
-Now compute $E[|X|]$:
+Now compute $E[|X|]$ such that
 \[
 E[|X|]=\sum_i |X_i| \cdot p_i.
 \]
-	Case 1: $X_i=0\Rightarrow |X_i|p_i=0\cdot p_i=0$.
+
+	Case 1: $X_i=0\Rightarrow |X_i|p_i=0\cdot p_i=0$.\\
 	Case 2: $X_i\neq0\Rightarrow p_i=0\Rightarrow |X_i|p_i=|X_i|\cdot0=0$.
 Every term is zero, so $E[|X|]=0$.
 
