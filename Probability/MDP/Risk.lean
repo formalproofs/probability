@@ -1,16 +1,19 @@
 import Probability.Probability.Basic
+import Mathlib.Data.Finset.Image
 
 namespace Risk
 
-open Findist FinRV
 
+open Findist FinRV
+open Classical
 variable {n : ℕ}
+variable (P : Findist n) (X : FinRV n ℚ) (c : ℚ) (α : ℚ)
 
 def cdf (P : Findist n) (X : FinRV n ℚ) (t : ℚ) : ℚ := ℙ[X ≤ᵣ t // P]
 
 /-- Finite set of values taken by a random variable X : Fin n → ℚ. -/
 def rangeOfRV (X : FinRV n ℚ) : Finset ℚ := Finset.univ.image X
-
+def translated_RV : FinRV n ℚ := fun i => X i + c
 /-- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
 If we assume 0 ≤ α ∧ α ≤ 1, then the "else 0" branch is never used. -/
 
@@ -21,7 +24,15 @@ def VaR (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
   else
     0
 
-notation "VaR[" α "," X "//" P "]" => VaR P X α
+
+theorem cdf_translation (P : Findist n) (X : FinRV n ℚ) (t c : ℚ) :
+  cdf P (fun ω => X ω + c) t = cdf P X (t - c) := by
+  rw [cdf, cdf]
+  apply congr_arg
+  ext ω
+  simp [FinRV.leq]
+  exact le_sub_iff_add_le.symm
+
 
 theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ)
   (hXY : ∀ ω, X ω ≤ Y ω) : VaR P X α ≤ VaR P Y α := by
@@ -36,13 +47,118 @@ theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ)
       · have hX : X ω ≤ t := by exact h1 hY
         simp [𝕀, indicator, FinRV.leq, hY, hX]
       · simp [𝕀, indicator, FinRV.leq, hY]
-    simp [cdf]
-
     sorry
   sorry
 
-theorem VaR_translation_invariant (P : Findist n) (X : FinRV n ℚ) (α c : ℚ) :
-  VaR P (fun ω => X ω + c) α = VaR P X α + c := sorry
+/-- The minimum of a set shifted by a constant is the minimum plus the constant. -/
+lemma finset_min'_image_add_const {A : Finset ℚ} (hA : A.Nonempty) (c : ℚ) :
+    (A.image fun t => t + c).min' ((Finset.image_nonempty.mpr hA)) = (A.min' hA) + c := by
+
+  let a_min := A.min' hA -- let a_min be the minimum of A
+  -- the goal is to show that a_min + c is the minimum of the shifted set.
+  -- show a_min + c is in the shifted set.
+  have h_mem : a_min + c ∈ (A.image fun t => t + c) := by
+    apply Finset.mem_image.mpr
+    exact ⟨a_min, Finset.min'_mem A hA, rfl⟩  -- a_min is the min element, so it must be in A.
+  -- show a_min + c is less than or equal to all elements t' in the shifted set.
+  have h_le : ∀ t', t' ∈ (A.image fun t => t + c) → a_min + c ≤ t' := by
+    intro t' h_t'
+    rcases Finset.mem_image.mp h_t' with ⟨t, h_t_mem, rfl⟩ -- t' must be of the form t + c for some t in A.
+    have h_a_min_le_t : a_min ≤ t := Finset.min'_le A t h_t_mem -- because a_min is the minimum of A, a_min ≤ t.
+    exact add_le_add_right h_a_min_le_t c -- add c to both sides of the inequality.
+  apply le_antisymm
+  ·
+    apply Finset.min'_le -- show that the minimum of the shifted set is less than or equal to a_min + c.
+    exact h_mem
+  ·
+    apply Finset.le_min'-- show that a_min + c is less than or equal to the minimum of the shifted set.
+    exact h_le
+
+
+theorem range_translated_eq_shifted_range : rangeOfRV (translated_RV X c) = (rangeOfRV X).image fun t => t + c := by
+  -- Proof: Unfold rangeOfRV, use Finset.image properties, and ext.
+  unfold rangeOfRV translated_RV
+  simp_rw [Finset.image_image]
+  rfl
+
+
+theorem VaR_set_translated: (rangeOfRV (translated_RV X c)).filter fun t' => cdf P (translated_RV X c) t' ≥ α =
+    ((rangeOfRV X).filter fun t => cdf P X t ≥ α).image fun t => t + c := by
+  apply Finset.ext
+  intro t_prime
+
+  -- The LHS is (range(X+c) ∩ {t' | cdf(X+c, t') ≥ α})
+  -- The RHS is {t+c | t ∈ range(X) ∩ {t | cdf(X, t) ≥ α}}
+
+  constructor-- Split into two directions (biconditional)
+  · intro h_in_LHS
+    -- decompose the filter membership h_in_LHS into its two parts:
+    have h_decomp := Finset.mem_filter.mp h_in_LHS
+    have h_mem_range_Y : t_prime ∈ rangeOfRV (translated_RV X c) := h_decomp.1
+    have h_cdf_Y : cdf P (translated_RV X c) t_prime ≥ α := h_decomp.2
+
+    -- rewrite the range membership to expose the image structure:
+    rw [range_translated_eq_shifted_range] at h_mem_range_Y
+
+    -- decompose the image membership to get t ∈ range(X):
+    rcases Finset.mem_image.mp h_mem_range_Y with ⟨t, h_t_mem, rfl⟩
+
+    -- 4. Prove t ∈ range(X) AND cdf(X, t) ≥ α (RHS membership via filter)
+    unfold translated_RV at h_cdf_Y
+    rw [cdf_translation P X (t + c) c] at h_cdf_Y
+    ring_nf at h_cdf_Y
+    apply Finset.mem_image.mpr
+    exact ⟨t, Finset.mem_filter.mpr ⟨h_t_mem, h_cdf_Y⟩, rfl⟩
+
+  · intro h_in_RHS
+    rcases Finset.mem_image.mp h_in_RHS with ⟨t, h_t_S_X, rfl⟩
+    -- decompose h_t_S_X into its two parts:
+    have h_t_decomp := Finset.mem_filter.mp h_t_S_X
+    have h_t_mem_range_X : t ∈ rangeOfRV X := h_t_decomp.1
+    have h_cdf_X : cdf P X t ≥ α := h_t_decomp.2
+
+    -- prove t+c ∈ range(X+c) AND cdf(X+c, t+c) ≥ α (LHS membership via filter)
+    apply Finset.mem_filter.mpr
+
+    constructor
+    -- 1. Prove t+c ∈ range(X+c)
+    · rw [range_translated_eq_shifted_range]
+      exact Finset.mem_image_of_mem (fun x => x + c) h_t_mem_range_X
+
+    -- 2. Prove cdf(X+c, t+c) ≥ α
+    · unfold translated_RV
+      rw [cdf_translation P X (t + c) c]
+      ring_nf
+      exact h_cdf_X
+
+
+theorem VaR_translation_invariance (h_S_nonempty : ((rangeOfRV X).filter fun t => cdf P X t ≥ α).Nonempty) :
+    VaR P (translated_RV X c) α = VaR P X α + c := by
+
+  let S_X := (rangeOfRV X).filter fun t => cdf P X t ≥ α
+  let S_Y := (rangeOfRV (translated_RV X c)).filter fun t' => cdf P (translated_RV X c) t' ≥ α
+
+  have h_set_eq : S_Y = S_X.image fun t => t + c := VaR_set_translated P X c α
+  have h_S_Y_nonempty : S_Y.Nonempty := by -- Show S_Y is also non-empty
+    rw [h_set_eq]
+    exact Finset.image_nonempty.mpr h_S_nonempty
+
+  unfold VaR
+  have h_VaR_X_eq : VaR P X α = S_X.min' h_S_nonempty := by
+    simp only [S_X]
+    apply dif_pos h_S_nonempty
+
+  have h_VaR_Y_eq : VaR P (translated_RV X c) α = S_Y.min' h_S_Y_nonempty := by
+    simp only [S_Y]
+    apply dif_pos h_S_Y_nonempty
+
+  calc
+    VaR P (translated_RV X c) α
+    _ = S_Y.min' h_S_Y_nonempty := by rw [h_VaR_Y_eq]
+    _ = (S_X.image fun t => t + c).min' (Finset.image_nonempty.mpr h_S_nonempty) := by exact Finset.min'.congr_simp S_Y (Finset.image (fun t => t + c) S_X) h_set_eq h_S_Y_nonempty
+    _ = S_X.min' h_S_nonempty + c := by exact finset_min'_image_add_const h_S_nonempty c
+    _ = VaR P X α + c := by rw [←h_VaR_X_eq]
+
 
 theorem VaR_positive_homog (P : Findist n) (X : FinRV n ℚ) (α c : ℚ)
   (hc : c > 0) : VaR P (fun ω => c * X ω) α = c * VaR P X α := sorry
