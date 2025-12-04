@@ -573,6 +573,52 @@ The following proof is simpler but may require some more advanced properties.
 \end{align*}
 \end{proof}
 
+
+%% -- Non-Degeneracy 
+\subsection{Non-Degeneracy}
+\begin{theorem}[Non-degeneracy of $L_1$-norm] \label{thm:non-degeneracy}
+Let $(\Omega,\mathcal{F},\PP)$ be a discrete probability space with $\Omega=\{\omega_1,\omega_2,\ldots\}$ countable, and let $p_i=P(\{\omega_i\})\geq0$ with $\sum_i p_i =1$. Let $X$ be a random variable with $X_i=X(\omega_i)$. Then
+\[
+\E[|X|]=0 \Longleftrightarrow \PP(\{\omega\in\Omega:X(\omega)=0\})=1.
+\]
+\end{theorem}
+
+\begin{proof}
+\textit{Proof of ($\Leftarrow$):} Assume $\PP(X=0)=1$.
+If $\PP(X=0)=1$, then $\PP(X\neq0)=0$.
+In discrete terms $p_i=0$ for all $\omega_i$ such that $X_i\neq0$.
+Now compute $\E[|X|]$ such that
+\[
+\E[|X|]=\sum_i |X_i| \cdot p_i.
+\]
+
+	Case 1: $X_i=0\Rightarrow |X_i|p_i=0\cdot p_i=0$.\\
+	Case 2: $X_i\neq0\Rightarrow p_i=0\Rightarrow |X_i|p_i=|X_i|\cdot0=0$.
+Every term is zero, so $\E[|X|]=0$.
+
+\textit{Proof of ($\Rightarrow$):} Assume $\E[|X|]=0$.
+We have
+\[
+\E[|X|]=\sum_i |X_i| \cdot p_i=0,
+\]
+where $|X_i|p_i\geq0$ for all $i$. For a sum of nonnegative terms to be zero, each term must be zero
+\[
+|X_i|p_i=0 \quad \text{for all } i.
+\]
+Thus, for each $i$, either $p_i=0$ or $|X_i|=0$ (i.e., $X_i=0$).
+Let $N=\{\omega_i:X_i\neq0\}$.
+For $\omega_i\in N$, we have $X_i\neq0\Rightarrow |X_i|\neq0\Rightarrow$ from $|X_i|p_i=0$ we must have $p_i=0$.
+Therefore:
+\[
+\PP(X\neq0)=\sum_{\omega_i\in N} p_i =\sum_{\omega_i\in N} 0=0.
+\]
+Thus $\P(X=0)=1-\PP(X\neq0)=1$. Hence, we conclude that 
+\[
+\E[|X|]=0 \Longleftrightarrow \PP(X=0)=1.
+\]
+\end{proof}
+
+
 \section{Formal Decision Framework}
 
 \subsection{Markov Decision Process}
