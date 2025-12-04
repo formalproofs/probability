@@ -11,12 +11,25 @@ variable (P : Findist n) (X : FinRV n ℚ) (c : ℚ) (α : ℚ)
 
 def cdf (P : Findist n) (X : FinRV n ℚ) (t : ℚ) : ℚ := ℙ[X ≤ᵣ t // P]
 
+theorem cdf_monotone (P : Findist n) (X : FinRV n ℚ) (t1 t2 : ℚ)
+  (ht : t1 ≤ t2) : cdf P X t1 ≤ cdf P X t2 := by
+  simp [cdf]
+  apply exp_monotone
+  intro ω
+  by_cases h1 : X ω ≤ t1
+  · have h2 : X ω ≤ t2 := le_trans h1 ht
+    simp [FinRV.leq, 𝕀, indicator, h1, h2]
+  · simp [𝕀, indicator, FinRV.leq, h1]
+    by_cases h2 : X ω ≤ t2
+    · simp [h2]
+    · simp [h2] ---these lines seem really unnecessary but idk how to fix it
+
+
 /-- Finite set of values taken by a random variable X : Fin n → ℚ. -/
 def rangeOfRV (X : FinRV n ℚ) : Finset ℚ := Finset.univ.image X
 def translated_RV : FinRV n ℚ := fun i => X i + c
 /-- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
 If we assume 0 ≤ α ∧ α ≤ 1, then the "else 0" branch is never used. -/
-
 def VaR (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
   let S : Finset ℚ := (rangeOfRV X).filter (fun t => cdf P X t ≥ α)
   if h : S.Nonempty then
@@ -48,6 +61,7 @@ theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ)
         simp [𝕀, indicator, FinRV.leq, hY, hX]
       · simp [𝕀, indicator, FinRV.leq, hY]
     sorry
+  rw [hx, hy]
   sorry
 
 /-- The minimum of a set shifted by a constant is the minimum plus the constant. -/
@@ -169,7 +183,7 @@ def tailInd (X : FinRV n ℚ) (t : ℚ) : FinRV n ℚ :=
   fun ω => if X ω > t then 1 else 0
 
 /-- Conditional Value-at-Risk (CVaR) of X at level α under P.
-CVaR =  E[X * I[X > VaR] ] / P[X > VaR]
+CVaR_α(X) =  E[X * I[X > VaR] ] / P[X > VaR]
 If the tail probability is zero, CVaR is defined to be 0.
 -/
 def CVaR (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
@@ -182,7 +196,11 @@ def CVaR (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
   else
      num / den
 
-notation "CVaR[" α "," X "//" P "]" => CVaR P X α
+-- NOTE (Marek): The CVaR, as defined above is not convex/concave.
+-- See Page 14 at https://www.cs.unh.edu/~mpetrik/pub/tutorials/risk2/dlrl2023.pdf
+-- NOTE (Marek): The CVaR above is defined for costs and not rewards
+
+notation "CVaR[" X "//" P ", " α "]" => CVaR P X α
 
 --TODO: prove...
 -- monotonicity: (∀ ω, X ω ≤ Y ω) → CVaR[α, X // P] ≤ CVaR[α, Y // P]
@@ -190,5 +208,6 @@ notation "CVaR[" α "," X "//" P "]" => CVaR P X α
 -- positive homogeneity: c > 0 → CVaR[α, (fun ω => c * X ω) // P] = c * CVaR[α, X // P]
 -- convexity
 -- CVaR ≥ VaR: CVaR[α, X // P] ≥ VaR[α, X // P]
+
 
 end Risk
