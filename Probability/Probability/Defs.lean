@@ -211,6 +211,7 @@ end RandomVariable
 ------------------------------ Probability ---------------------------
 
 
+
 variable {n : ℕ} (P : Findist n) (B C : FinRV n Bool)
 
 /-- Probability of B -/
@@ -234,7 +235,7 @@ theorem prob_one_of_true : ℙ[1 // P] = 1 :=
        rewrite [one_of_true, dotProduct_comm]
        exact P.prob
 
-example {a b : ℚ} (h : 0 ≤ a) (h2 : 0 ≤ b) : 0 ≤ a * b :=  Rat.mul_nonneg h h2
+example {a b : ℚ} (h : 0 ≤ a) (h2 : 0 ≤ b) : 0 ≤ se * b :=  Rat.mul_nonneg h h2
 
 variable {P : Findist n} {B : FinRV n Bool}
 
