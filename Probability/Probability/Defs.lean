@@ -209,7 +209,7 @@ theorem one_of_ind_bool_or_not : (𝕀∘B) + (𝕀∘(¬ᵣ B)) = (1 : FinRV n 
 
 variable {X Y: FinRV n ℚ}
 
-theorem rv_le_abs : X ≤ abs ∘ X := by intro i; simp [le_abs_self (X i)]
+theorem rv_le_abs(X : FinRV n ℚ) : X ≤ abs ∘ X := by intro i; simp [le_abs_self (X i)]
 
 theorem rv_prod_sum_linear {Xs : Fin k → FinRV n ℚ} : ∑ i, Y * (Xs i) = Y * (∑ i, Xs i) :=
     by ext ω
@@ -348,3 +348,18 @@ theorem exp_indi_eq_exp_indr : ∀i : Fin k, 𝔼[L =ᵢ i // P] = 𝔼[𝕀 ∘
 theorem exp_monotone (h: X ≤ Y)  : 𝔼[X // P] ≤ 𝔼[Y // P] :=  dotProduct_le_dotProduct_of_nonneg_left h P.nneg
 
 end Expectation_properties
+
+namespace Geometry
+
+variable {E : Type} [AddCommGroup E] [Module ℚ E]
+
+def convex (S : Set E) : Prop :=
+  ∀ ⦃x y : E⦄ ⦃t : ℚ⦄, 0 ≤ t → t ≤ 1 → x ∈ S → y ∈ S → t • x + (1 - t) • y ∈ S
+
+def convex_on (S : Set E) (f : E → ℚ) : Prop :=
+  convex S ∧ ∀ ⦃x y : E⦄ ⦃t : ℚ⦄, 0 ≤ t → t ≤ 1 → x ∈ S → y ∈ S →
+    f (t • x + (1 - t) • y) ≤ t * f x + (1 - t) * f y
+
+
+
+end Geometry
