@@ -5,7 +5,6 @@
 % If you want to split the blueprint content into several files then
 % the current file can be a simple sequence of \input. Otherwise It
 % can start with a \section or \chapter for instance.
-
 \newcommand{\id}{\operatorname{id}}
 
 
@@ -1289,6 +1288,31 @@ A \emph{Markov policy Bellman operator} $L_k^{\pi}\colon \mathcal{V} \to \mathca
   \]
   %%\lean{MDPs.v_dp_π}\leanok
 \end{definition}
+
+\section{Probability Maticies}
+
+
+\begin{definition}
+A probability matrix $\bold{P}$ is defined as an $n \times n$ matrix with the properties:
+\begin{align*}
+	&\bold{P}_{ij} \geq 0 \quad \forall i,j \in \{1,2,\dots,n\} \\
+	&\bold{P}\bold{1} = \bold{1} 
+\end{align*}
+\end{definition}
+\begin{theorem}
+Let $\bold{d} \in \Delta^n$. Then
+\[
+\bold{d}^{T}\bold{P} \in \Delta^n
+\]
+\end{theorem}
+\begin{proof}
+Let $i \in \{1,2,\dots,n\}$ and $\bold{p} = \bold{d}^{T}\bold{P} $. Then $p_i = \bold{d}^{T}\bold{P}_i$ where $\bold{P}_i$ is the $i^{th}$ column of $\bold{P}$. Since all the elements of both $\bold{P}_i$ and $\bold{d}$ are non-negative, their inner product must also be non-negative. Since
+\begin{align*}
+	\bold{d}^{T}\bold{P}\bold{1} &= \bold{d}^{T}\bold{1} \\
+	&= 1~,
+\end{align*}
+$\bold{p}$ satisfies that its elements are non-negative and sum to 1 making it a member of $\Delta^n$
+\end{proof}
 
 %%% Local Variables:
 %%% coding: utf-8
