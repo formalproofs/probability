@@ -22,6 +22,8 @@ def Quantile : Set ℚ := { q | IsQuantile P X α q}
 /-- Set of lower bounds on a quantile at `α` -/
 def QuantileLower : Set ℚ := {q | IsQuantileLower P X α q}
 
+-- TODO: Would it make sense to use Set.preimage in the definitions above?
+
 end Definition
 
 theorem qset_lb : q ∈ Quantile P X α → ℙ[X ≤ᵣ q // P ] ≥ α := by simp_all [Quantile, IsQuantile]
