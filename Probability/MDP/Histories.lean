@@ -73,6 +73,8 @@ def Hist.length : Hist M → ℕ
 
 def MDP.HistT (M : MDP) (t : ℕ) := {m : Hist M // m.length = t}
 
+-- TODO: We should probe that HistT is a Fintype in order to be able to perform operations on it
+
 /-- Nonempty histories -/
 abbrev HistNE (M : MDP) := {m : Hist M // m.length ≥ 1}
 
@@ -86,6 +88,11 @@ def Hist.last : Hist M → Fin M.S
 def MDP.numhist (M : MDP) (t : ℕ) : ℕ := M.S * M.SA^t
 
 theorem hist_len_zero : M.numhist 0 = M.S := by simp [MDP.numhist]
+
+-- TODO: perhaps this whole construction below is not needed and we would be better off 
+-- just using the mapping of FinType / Finset to natural numbers
+
+
 
 /-- Construct i-th history of length t -/
 def MDP.idx_to_hist (M : MDP) (t : ℕ) (i : Fin (M.numhist t)) : M.HistT t := 
@@ -118,7 +125,6 @@ lemma Nat.sum_one_prod_cancel (n : ℕ) {m : ℕ} (h : 0 < m) : (m-1) * n + n = 
   by rw [Nat.sub_one_mul]
      apply Nat.sub_add_cancel
      exact Nat.le_mul_of_pos_left n h 
-
 
 /-
   match h with 
@@ -208,10 +214,8 @@ theorem hist_idx_LeftInverse : ∀M : MDP, LeftInverse M.idx_to_hist' M.hist_to_
   · sorry -- we will need induction for this problem 
   · sorry -- this is the easy case which should be impossible
     
-  
-
 -- this is a RightInvOn because we can possibly feed an incorrect index to the history 
-theorem hist_idx_RightInverse : ∀M : MDP, Set.RightInvOn M.idx_to_hist' M.hist_to_idx' M.hist_idx_valid := sorry 
+theorem hist_idx_RightInverseOn : ∀M : MDP, Set.RightInvOn M.idx_to_hist' M.hist_to_idx' M.hist_idx_valid := sorry 
 
 /-- Return the prefix of hist of length k -/
 def Hist.prefix (k : ℕ) (h : Hist M) : Hist M :=
@@ -228,7 +232,6 @@ def MDP.hist2tuple : HistNE M → Hist M × (Fin M.A) × (Fin M.S)
   | ⟨Hist.foll h a s, _ ⟩ => ⟨h, a, s⟩
 
 -- mapping between tuples and histories are injective
-
 lemma linv_hist2tuple_tuple2hist : LeftInverse M.hist2tuple M.tuple2hist := fun _ ↦ rfl
 lemma inj_tuple2hist_l1 : Injective M.tuple2hist  := LeftInverse.injective linv_hist2tuple_tuple2hist
 lemma inj_tuple2hist : Injective (Subtype.val ∘ M.tuple2hist)  := Injective.comp (Subtype.val_injective) inj_tuple2hist_l1
@@ -276,7 +279,6 @@ theorem hist_lenth_eq_horizon (h : Hist M) (t : ℕ): ∀ h' ∈ (ℋ h t), h'.l
 def HistoriesHorizon : ℕ → Finset (Hist M)
   | Nat.zero => M.setS.map state2hist_emb 
   | Nat.succ t => ((HistoriesHorizon t) ×ˢ M.setA ×ˢ M.setS).map emb_tuple2hist
-
 
 abbrev ℋₜ : ℕ → Finset (Hist M) := HistoriesHorizon
 
