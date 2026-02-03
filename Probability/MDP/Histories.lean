@@ -194,14 +194,21 @@ def MDP.hist_to_idx' (M : MDP) (h : Hist M) : ℕ × ℕ := ⟨h.length, M.hist_
 -- TODO: note that this definition drops the Fin constraint 
 -- because I did not know how to code it with it when usig a tuple
 def MDP.idx_to_hist' (M : MDP) (ti : ℕ × ℕ) : Hist M := 
-  if h : ti.2 < M.numhist ti.1 then
-    (M.idx_to_hist ti.1 ⟨ti.2, h⟩).1
+  if hl : ti.2 < M.numhist ti.1 then
+    (M.idx_to_hist ti.1 ⟨ti.2, hl⟩).1
   else
     Hist.init ⟨0, M.S_ne⟩ -- TODO: This is an empty history 
 
 def MDP.hist_idx_valid (M : MDP) := {ti : ℕ × ℕ | ti.2 < M.numhist ti.1}
 
-theorem hist_idx_LeftInverse : ∀M : MDP, LeftInverse M.idx_to_hist' M.hist_to_idx'  := sorry 
+theorem hist_idx_LeftInverse : ∀M : MDP, LeftInverse M.idx_to_hist' M.hist_to_idx' := by 
+  intro M h 
+  unfold MDP.idx_to_hist' 
+  split_ifs 
+  · sorry -- we will need induction for this problem 
+  · sorry -- this is the easy case which should be impossible
+    
+  
 
 -- this is a RightInvOn because we can possibly feed an incorrect index to the history 
 theorem hist_idx_RightInverse : ∀M : MDP, Set.RightInvOn M.idx_to_hist' M.hist_to_idx' M.hist_idx_valid := sorry 
