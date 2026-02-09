@@ -42,10 +42,19 @@ variable (M : MDP)
 def MDP.maxS : Fin M.S := ⟨M.S-1, by simp [M.S_ne]⟩
 def MDP.maxA : Fin M.A := ⟨M.A-1, by simp [M.A_ne]⟩
 
+-- here, we use the fintype property to show that the state and action
+-- sets are complete 
+
+abbrev MDP.St := Fin M.S 
+abbrev MDP.At := Fin M.A
+
 /-- Set of all states -/
-def MDP.setS : Finset (Fin M.S) := Finset.attachFin (Finset.range M.S) (fun _ h ↦ Finset.mem_range.mp h)
+def MDP.setS : Finset M.St := Fintype.elems 
 /-- Set of all actions -/
-def MDP.setA : Finset (Fin M.A) := Finset.attachFin (Finset.range M.A) (fun _ h ↦ Finset.mem_range.mp h)
+def MDP.setA : Finset M.At := Fintype.elems
+
+theorem MDP.inS : ∀s : M.St, s ∈ M.setS := Fintype.complete
+theorem MDP.inA : ∀a : M.At, a ∈ M.setA := Fintype.complete
 
 def MDP.SA := M.S * M.A
 
@@ -89,9 +98,8 @@ def MDP.numhist (M : MDP) (t : ℕ) : ℕ := M.S * M.SA^t
 
 theorem hist_len_zero : M.numhist 0 = M.S := by simp [MDP.numhist]
 
--- TODO: perhaps this whole construction below is not needed and we would be better off 
--- just using the mapping of FinType / Finset to natural numbers
-
+--------------------------- START: Explicit index for hist -------------------------------------------------------------------
+section ExplicitHistIndex
 
 /-- Construct i-th history of length t -/
 def MDP.idx_to_hist (M : MDP) (t : ℕ) (i : Fin (M.numhist t)) : M.HistT t := 
@@ -172,27 +180,30 @@ def MDP.hist_to_idx (M : MDP) (h : Hist M) : Fin (M.numhist h.length) :=
 open Function 
 
 
-
-
+/-- A more convenient definition for constructing inverses  -/
 def MDP.hist_to_idx' (M : MDP) (t : ℕ) (h : HistT M t) : Fin (M.numhist t) := h.property ▸ M.hist_to_idx h.val
 
--- TODO: note that this definition drops the Fin constraint 
--- because I did not know how to code it with it when usig a tuple
+/-- A more convenient definition for constructing inverses  -/
 def MDP.idx_to_hist' (M : MDP) (t : ℕ) (i : Fin (M.numhist t)) : HistT M t := 
     M.idx_to_hist t i
 
 def MDP.hist_idx_valid (M : MDP) := {ti : ℕ × ℕ | ti.2 < M.numhist ti.1}
 
-
 variable (M : MDP) (t : ℕ) 
 
-theorem hist_idx_LeftInvers : LeftInverse (M.idx_to_hist' t) (M.hist_to_idx' t) := by 
-  unfold MDP.idx_to_hist' 
-  sorry 
+-- TODO: the following two proofs probably need to use induction 
+
+theorem hist_idx_LeftInverse : LeftInverse (M.idx_to_hist' t) (M.hist_to_idx' t) := by sorry 
     
-  
 -- this is a RightInvOn because we can possibly feed an incorrect index to the history 
-theorem hist_idx_RightInverseOn : RightInverse (M.idx_to_hist' t) (M.hist_to_idx' t) := sorry 
+theorem hist_idx_RightInverse : RightInverse (M.idx_to_hist' t) (M.hist_to_idx' t) := sorry 
+
+
+end ExplicitHistIndex
+------------------------------ END: Explicit index for history --------------------------------------------
+
+------------------------------ An implicit index construction through a finset --------------------------------------------
+-- this is a less practical construction, but probably will be easier to deal with ---
 
 /-- Return the prefix of hist of length k -/
 def Hist.prefix (k : ℕ) (h : Hist M) : Hist M :=
@@ -208,27 +219,29 @@ def MDP.tuple2hist : Hist M × (Fin M.A) × (Fin M.S) → HistNE M
 def MDP.hist2tuple : HistNE M → Hist M × (Fin M.A) × (Fin M.S) 
   | ⟨Hist.foll h a s, _ ⟩ => ⟨h, a, s⟩
 
+open Function 
+
+variable {M : MDP}
+
 -- mapping between tuples and histories are injective
 lemma linv_hist2tuple_tuple2hist : LeftInverse M.hist2tuple M.tuple2hist := fun _ ↦ rfl
-lemma inj_tuple2hist_l1 : Injective M.tuple2hist  := LeftInverse.injective linv_hist2tuple_tuple2hist
+lemma inj_tuple2hist_l1  : Injective M.tuple2hist  := LeftInverse.injective linv_hist2tuple_tuple2hist
 lemma inj_tuple2hist : Injective (Subtype.val ∘ M.tuple2hist)  := Injective.comp (Subtype.val_injective) inj_tuple2hist_l1
 
 def emb_tuple2hist_l1 : Hist M × (Fin M.A) × (Fin M.S) ↪ HistNE M := ⟨M.tuple2hist, inj_tuple2hist_l1⟩
 def emb_tuple2hist : Hist M × (Fin M.A) × (Fin M.S) ↪ Hist M  := ⟨λ x ↦  M.tuple2hist x, inj_tuple2hist⟩
 
 --- state
-def state2hist (s : Fin M.S) : Hist M := Hist.init s
-def hist2state : Hist M → (Fin M.S) 
+def MDP.state2hist (M : MDP) (s : Fin M.S) : Hist M := Hist.init s
+def MDP.hist2state (M : MDP) : Hist M → (Fin M.S) 
     | Hist.init s => s 
     | Hist.foll _ _ s => s
     
-lemma linv_hist2state_state2hist : LeftInverse (hist2state (M:=M)) state2hist := fun _ => rfl
-lemma inj_state2hist : Injective (state2hist (M:=M)) := 
-                     LeftInverse.injective linv_hist2state_state2hist
+lemma linv_hist2state_state2hist : LeftInverse M.hist2state M.state2hist := fun _ => rfl
+lemma inj_state2hist : Injective (M.state2hist) := LeftInverse.injective linv_hist2state_state2hist
                      
-def state2hist_emb : (Fin M.S) ↪ Hist M := ⟨state2hist, inj_state2hist⟩
+def state2hist_emb : (Fin M.S) ↪ Hist M := ⟨M.state2hist, inj_state2hist⟩
 
--- TODO: we probably do not need this function 
 /-- Checks if the first hist is the prefix of the second hist. -/
 def isprefix : Hist M → Hist M → Bool 
     | Hist.init s₁, Hist.init s₂ => s₁ = s₂
@@ -252,13 +265,36 @@ abbrev ℋ : Hist M → ℕ → Finset (Hist M) := Histories
 
 theorem hist_lenth_eq_horizon (h : Hist M) (t : ℕ): ∀ h' ∈ (ℋ h t), h'.length = h.length + t := sorry
 
+@[simp]
+theorem hist_foll_nonempty (h : Hist M) (a : M.At) (s : M.St) : (h.foll a s).length > 0 := by simp 
+
+theorem hist_foll_len (h : Hist M) (a : M.At) (s : M.St) : (h.foll a s).length = h.length + 1 := 
+    by rewrite [Hist.length.eq_def]; exact Nat.add_comm 1 h.length
+
 /-- All histories of a given length  -/
-def HistoriesHorizon : ℕ → Finset (Hist M)
+def HistoriesHorizon (t : ℕ) : Finset (Hist M) := 
+  match t with
   | Nat.zero => M.setS.map state2hist_emb 
   | Nat.succ t => ((HistoriesHorizon t) ×ˢ M.setA ×ˢ M.setS).map emb_tuple2hist
 
-abbrev ℋₜ : ℕ → Finset (Hist M) := HistoriesHorizon
+theorem hist_horiz_complete (t : ℕ) (h : M.HistT t) : h.val ∈ HistoriesHorizon t := by
+    induction t 
+    case zero =>
+      obtain ⟨h, ht⟩ := h
+      cases h with
+        | init s => simpa [HistoriesHorizon] using ⟨s, ⟨M.inS s, rfl⟩⟩
+        | foll h s a => exfalso; simp_all 
+    case succ h' ih =>
+      obtain ⟨h, ht⟩ := h
+      unfold HistoriesHorizon at ⊢ 
+      cases h with 
+        | init s => exfalso; simp_all
+        | foll h s a =>
+          rewrite [hist_foll_len] at ht 
+          have ih1 := ih ⟨h, Nat.succ_inj.mp ht⟩ 
+          simp_all [emb_tuple2hist, MDP.tuple2hist, M.inS, M.inA] 
 
+abbrev ℋₜ : ℕ → Finset (Hist M) := HistoriesHorizon
 
 end Histories
 
