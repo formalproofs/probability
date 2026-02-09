@@ -71,9 +71,9 @@ def Hist.length : Hist M → ℕ
   | init _ => 0
   | Hist.foll h _ _ => 1 + length h
 
-def MDP.HistT (M : MDP) (t : ℕ) := {m : Hist M // m.length = t}
+def MDP.HistT (M : MDP) (t : ℕ) := {h : Hist M // h.length = t}
 
--- TODO: We should probe that HistT is a Fintype in order to be able to perform operations on it
+-- TODO: We should prove that HistT is a Fintype in order to be able to perform operations on it
 
 /-- Nonempty histories -/
 abbrev HistNE (M : MDP) := {m : Hist M // m.length ≥ 1}
@@ -91,7 +91,6 @@ theorem hist_len_zero : M.numhist 0 = M.S := by simp [MDP.numhist]
 
 -- TODO: perhaps this whole construction below is not needed and we would be better off 
 -- just using the mapping of FinType / Finset to natural numbers
-
 
 
 /-- Construct i-th history of length t -/
@@ -125,29 +124,6 @@ lemma Nat.sum_one_prod_cancel (n : ℕ) {m : ℕ} (h : 0 < m) : (m-1) * n + n = 
   by rw [Nat.sub_one_mul]
      apply Nat.sub_add_cancel
      exact Nat.le_mul_of_pos_left n h 
-
-/-
-  match h with 
-  | Hist.init s => ⟨s, by simp [numhist, Hist.length]⟩
-  | Hist.foll h' a s =>  
-      let ⟨n', hn'⟩ := M.hist_to_idx h'
-      let n := M.SA * n' + (a.val * M.S + s.val)
-      have h_as : a.val * M.S + s.val < M.SA := by
-        unfold MDP.SA
-        exact Nat.add_lt_add_of_lt_of_le 
-          (Nat.mul_lt_mul_of_pos_right a.2 M.S_ne) 
-          (Nat.le_of_lt s.2)
-      ⟨n, by
-        unfold numhist Hist.length
-        calc n = M.SA * n' + (a.val * M.S + s.val) := rfl
-             _ < M.SA * (M.S * M.SA ^ h'.length) + M.SA := 
-                 Nat.add_lt_add_of_lt_of_le 
-                   (Nat.mul_lt_mul_of_pos_left hn' M.SA_ne) 
-                   (Nat.le_sub_one_of_lt h_as)
-             _ = M.S * M.SA ^ (h'.length + 1) := by
-                 unfold MDP.SA; ring
-      ⟩
--/
 
 /-- Compute the index of a history  -/
 def MDP.hist_to_idx (M : MDP) (h : Hist M) : Fin (M.numhist h.length) := 
@@ -195,27 +171,28 @@ def MDP.hist_to_idx (M : MDP) (h : Hist M) : Fin (M.numhist h.length) :=
 
 open Function 
 
-def MDP.hist_to_idx' (M : MDP) (h : Hist M) : ℕ × ℕ := ⟨h.length, M.hist_to_idx h⟩
+
+
+
+def MDP.hist_to_idx' (M : MDP) (t : ℕ) (h : HistT M t) : Fin (M.numhist t) := h.property ▸ M.hist_to_idx h.val
 
 -- TODO: note that this definition drops the Fin constraint 
 -- because I did not know how to code it with it when usig a tuple
-def MDP.idx_to_hist' (M : MDP) (ti : ℕ × ℕ) : Hist M := 
-  if hl : ti.2 < M.numhist ti.1 then
-    (M.idx_to_hist ti.1 ⟨ti.2, hl⟩).1
-  else
-    Hist.init ⟨0, M.S_ne⟩ -- TODO: This is an empty history 
+def MDP.idx_to_hist' (M : MDP) (t : ℕ) (i : Fin (M.numhist t)) : HistT M t := 
+    M.idx_to_hist t i
 
 def MDP.hist_idx_valid (M : MDP) := {ti : ℕ × ℕ | ti.2 < M.numhist ti.1}
 
-theorem hist_idx_LeftInverse : ∀M : MDP, LeftInverse M.idx_to_hist' M.hist_to_idx' := by 
-  intro M h 
+
+variable (M : MDP) (t : ℕ) 
+
+theorem hist_idx_LeftInvers : LeftInverse (M.idx_to_hist' t) (M.hist_to_idx' t) := by 
   unfold MDP.idx_to_hist' 
-  split_ifs 
-  · sorry -- we will need induction for this problem 
-  · sorry -- this is the easy case which should be impossible
+  sorry 
     
+  
 -- this is a RightInvOn because we can possibly feed an incorrect index to the history 
-theorem hist_idx_RightInverseOn : ∀M : MDP, Set.RightInvOn M.idx_to_hist' M.hist_to_idx' M.hist_idx_valid := sorry 
+theorem hist_idx_RightInverseOn : RightInverse (M.idx_to_hist' t) (M.hist_to_idx' t) := sorry 
 
 /-- Return the prefix of hist of length k -/
 def Hist.prefix (k : ℕ) (h : Hist M) : Hist M :=
