@@ -6,7 +6,7 @@ import Mathlib.Data.Set.Operations
 
 namespace Risk
 
-open Findist FinRV Statistic 
+open Findist FinRV Statistic
 
 variable {n : ℕ}
 
@@ -16,15 +16,18 @@ def IsRiskLevel (α : ℚ) : Prop := 0 ≤ α ∧ α < 1
 
 def RiskLevel := { α : ℚ // IsRiskLevel α}
 
---instance instCoeRiskUnit : Coe RiskLevel UnitI where 
+--instance instCoeRiskUnit : Coe RiskLevel UnitI where
 --  coe := fun ⟨v,c⟩ => ⟨v, ⟨c.1, le_of_lt c.2⟩ ⟩
 
-/-- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
-    If we assume 0 ≤ α < 1, then the "else 0" branch is never used. -/
-def FinVaR1 (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : ℚ :=
+
+def FinVaR1Set (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : Finset ℚ :=
   let 𝓧 := Finset.univ.image X
-  let 𝓢 := 𝓧.filter (fun t ↦ ℙ[X <ᵣ t // P] ≤ α.val)
-  have h : 𝓢.Nonempty := by
+  𝓧.filter (fun t ↦ ℙ[X <ᵣ t // P] ≤ α.val)
+
+theorem FinVar1Set_nonempty (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : (FinVaR1Set (n := n) P X α).Nonempty :=
+  by
+    unfold FinVaR1Set
+    let 𝓧 := Finset.univ.image X
     apply Finset.filter_nonempty_iff.mpr
     let xmin := (Finset.univ.image X).min' (rv_image_nonempty P X)
     use xmin
@@ -34,7 +37,32 @@ def FinVaR1 (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : ℚ :=
       have := α.2
       unfold IsRiskLevel at this
       linarith
-  𝓢.max' h
+
+def FinVaR1 (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : ℚ :=
+  let 𝓧 := Finset.univ.image X
+  let 𝓢 := 𝓧.filter (fun t ↦ ℙ[X <ᵣ t // P] ≤ α.val)
+  have h : 𝓢.Nonempty := FinVar1Set_nonempty P X α
+  𝓢.min' h
+
+/- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
+    If we assume 0 ≤ α < 1, then the "else 0" branch is never used. -/
+
+---I redefined it above if we want to pull out the proof tht it is nonempty!
+
+-- def FinVaR1 (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : ℚ :=
+--   let 𝓧 := Finset.univ.image X
+--   let 𝓢 := 𝓧.filter (fun t ↦ ℙ[X <ᵣ t // P] ≤ α.val)
+--   have h : 𝓢.Nonempty := by
+--     apply Finset.filter_nonempty_iff.mpr
+--     let xmin := (Finset.univ.image X).min' (rv_image_nonempty P X)
+--     use xmin
+--     constructor
+--     · exact Finset.min'_mem 𝓧 (rv_image_nonempty P X)
+--     · have : ℙ[X <ᵣ xmin // P] = 0 := prob_lt_min_eq_zero
+--       have := α.2
+--       unfold IsRiskLevel at this
+--       linarith
+--   𝓢.max' h
 
 variable {α : RiskLevel}
 
@@ -42,7 +70,7 @@ theorem var1_prob_lt_var_le_alpha : ℙ[X <ᵣ (FinVaR1 P X α) // P] ≤ α.val
     generalize h : (FinVaR1 P X α) = t
     unfold FinVaR1 at h
     extract_lets 𝓧 𝓢 ne𝓢 at h
-    have tS : t ∈ 𝓢 := by subst h; exact Finset.max'_mem 𝓢 ne𝓢
+    have tS : t ∈ 𝓢 := by subst h; exact Finset.min'_mem 𝓢 ne𝓢
     exact (Finset.mem_filter.mp tS).right
 
 theorem var1_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR1 P X α) // P] > α.val := by
@@ -64,7 +92,7 @@ theorem var1_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR1 P X α) // P] > α.val
       constructor
       · exact hqin
       · rw [hqp]; exact hg
-    have : q ≤ t := by subst h; exact Finset.le_max' 𝓢 q hqs
+    have : q ≤ t := by subst h; sorry --exact Finset.le_max' 𝓢 q hqs
     linarith
 
 notation "VaR[" X "//" P ", " α "]" => FinVaR1 P X α
@@ -126,7 +154,7 @@ theorem var2_is_quantilelower : IsVaR2 P X α v → IsQuantileLower P X α.val v
 theorem var2_is_quantile : IsVaR2 P X α v → IsQuantile P X α.val v := by
     intro h
     constructor
-    · suffices ℙ[X≤ᵣv//P] > α.val by linarith 
+    · suffices ℙ[X≤ᵣv//P] > α.val by linarith
       exact (var2_prob_cond.mp h).2
     · exact var2_is_quantilelower h
 
@@ -164,7 +192,7 @@ theorem var_eq_var2 : IsVaR P X α v ↔ IsVaR2 P X α v := by
       · exact (upperBounds_mono_of_isCofinalFor isquantile_le_isquantilelower) h.2
 
 theorem var_prob_cond : IsVaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ α.val < ℙ[ X ≤ᵣ v // P]) :=
-  by rw[var_eq_var2]; exact var2_prob_cond 
+  by rw[var_eq_var2]; exact var2_prob_cond
 
 ----------------------------- Fast VaR computation -------------------------------------------------------
 
@@ -323,7 +351,7 @@ theorem const_monotone_univ : Monotone (fun x ↦ x + c)  := add_left_mono
 theorem VaR2_translation_invariant : IsVaR2 P X α v → IsVaR2 P (X+c•1) α (v+c) := by
     intro h
     rw [IsVaR2,quantilelower_cash_image]
-    exact MonotoneOn.map_isGreatest (Monotone.monotoneOn add_left_mono 
+    exact MonotoneOn.map_isGreatest (Monotone.monotoneOn add_left_mono
                                     (QuantileLower P X α.val)) h
 
 theorem VaR_translation_invariant : VaR[X + c•1 // P, α] = VaR[X + c•1 // P, α] + c := sorry
