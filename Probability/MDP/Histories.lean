@@ -272,21 +272,23 @@ theorem hist_foll_len (h : Hist M) (a : M.At) (s : M.St) : (h.foll a s).length =
     by rewrite [Hist.length.eq_def]; exact Nat.add_comm 1 h.length
 
 /-- All histories of a given length  -/
-def HistoriesHorizon (t : ℕ) : Finset (Hist M) := 
+def MDP.HistoriesHorizon (M : MDP) (t : ℕ) : Finset (Hist M) := 
   match t with
   | Nat.zero => M.setS.map state2hist_emb 
-  | Nat.succ t => ((HistoriesHorizon t) ×ˢ M.setA ×ˢ M.setS).map emb_tuple2hist
+  | Nat.succ t => ((M.HistoriesHorizon t) ×ˢ M.setA ×ˢ M.setS).map emb_tuple2hist
 
-theorem hist_horiz_complete (t : ℕ) (h : M.HistT t) : h.val ∈ HistoriesHorizon t := by
+section Fintype_props 
+
+theorem hist_horiz_complete (t : ℕ) (h : M.HistT t) : h.val ∈ M.HistoriesHorizon t := by
     induction t 
     case zero =>
       obtain ⟨h, ht⟩ := h
       cases h with
-        | init s => simpa [HistoriesHorizon] using ⟨s, ⟨M.inS s, rfl⟩⟩
+        | init s => simpa [MDP.HistoriesHorizon] using ⟨s, ⟨M.inS s, rfl⟩⟩
         | foll h s a => exfalso; simp_all 
     case succ t' ih =>
       obtain ⟨h, ht⟩ := h
-      unfold HistoriesHorizon at ⊢ 
+      unfold MDP.HistoriesHorizon at ⊢ 
       cases h with 
         | init s => exfalso; simp_all
         | foll h s a =>
@@ -294,30 +296,48 @@ theorem hist_horiz_complete (t : ℕ) (h : M.HistT t) : h.val ∈ HistoriesHoriz
           have ih1 := ih ⟨h, Nat.succ_inj.mp ht⟩ 
           simp_all [emb_tuple2hist, MDP.tuple2hist, M.inS, M.inA] 
 
-
-example (A B : Finset ℕ)  (h : (a,b) ∈ A ×ˢ B) : a ∈ A := by rw [Finset.mem_product] at h; exact h.1 
-
 /-- Shows that there are no extra histories in the finset -/
-theorem hist_horiz_exact (t : ℕ) (h : Hist M) (hh : h ∈ HistoriesHorizon t) : h.length = t := by 
-  induction t 
+theorem hist_horiz_exact (t : ℕ) (h : Hist M) (hh : h ∈ M.HistoriesHorizon t) : h.length = t := by 
+  induction t generalizing h 
   case zero => 
-    unfold HistoriesHorizon state2hist_emb MDP.state2hist at hh 
+    unfold MDP.HistoriesHorizon state2hist_emb MDP.state2hist at hh 
     rw [Finset.mem_map] at hh
     obtain ⟨s, sin, sf⟩ := hh
     subst sf 
     simp only [Hist.length]
   case succ t' ih => 
-    unfold HistoriesHorizon at hh 
+    unfold MDP.HistoriesHorizon emb_tuple2hist MDP.tuple2hist at hh 
     rw [Finset.mem_map] at hh
     obtain ⟨has, hasi, em⟩ := hh 
-    have : has.1 ∈ HistoriesHorizon t' := by rw [Finset.mem_product] at hasi; exact hasi.1
-    sorry 
+    subst em 
+    unfold Hist.length
+    rw [Finset.mem_product] at hasi
+    rw [ih has.1 hasi.1]
+    exact Nat.add_comm 1 t'
 
+def MDP.HistoriesHorizonT (M : MDP) (t : ℕ) : Finset (M.HistT t) := 
+    let H := M.HistoriesHorizon t 
+    let f : {h : Hist M // h ∈ H} → M.HistT t := 
+          fun hh => ⟨hh.1, hist_horiz_exact t hh.1 hh.2⟩
+    have finj : Injective f := 
+          by unfold Injective f; intro h₁ h₂ steq; rw [Subtype.eq_iff] at steq; simpa using steq 
+    H.attach.map ⟨f, finj⟩
 
+theorem hist_horiz_complete_t (t : ℕ) (h : M.HistT t) : h ∈ M.HistoriesHorizonT t := by 
+    unfold MDP.HistoriesHorizonT
+    extract_lets H f finj 
+    have hinH : h.1 ∈ H := hist_horiz_complete t h
+    apply Finset.mem_map.mpr 
+    use ⟨h.1, hinH⟩
+    simp [f]
     
+instance (M : MDP) (t : ℕ) : Fintype (M.HistT t) where 
+    elems := M.HistoriesHorizonT t  
+    complete := fun h => hist_horiz_complete_t t h 
 
+end Fintype_props
 
-abbrev ℋₜ : ℕ → Finset (Hist M) := HistoriesHorizon
+abbrev ℋₜ : ℕ → Finset (Hist M) := M.HistoriesHorizon
 
 end Histories
 
