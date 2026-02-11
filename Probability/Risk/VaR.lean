@@ -42,7 +42,7 @@ def FinVaR1 (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : ℚ :=
   let 𝓧 := Finset.univ.image X
   let 𝓢 := 𝓧.filter (fun t ↦ ℙ[X <ᵣ t // P] ≤ α.val)
   have h : 𝓢.Nonempty := FinVar1Set_nonempty P X α
-  𝓢.min' h
+  𝓢.max' h
 
 /- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
     If we assume 0 ≤ α < 1, then the "else 0" branch is never used. -/
@@ -70,7 +70,7 @@ theorem var1_prob_lt_var_le_alpha : ℙ[X <ᵣ (FinVaR1 P X α) // P] ≤ α.val
     generalize h : (FinVaR1 P X α) = t
     unfold FinVaR1 at h
     extract_lets 𝓧 𝓢 ne𝓢 at h
-    have tS : t ∈ 𝓢 := by subst h; exact Finset.min'_mem 𝓢 ne𝓢
+    have tS : t ∈ 𝓢 := by subst h; exact Finset.max'_mem 𝓢 ne𝓢
     exact (Finset.mem_filter.mp tS).right
 
 theorem var1_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR1 P X α) // P] > α.val := by
@@ -92,7 +92,7 @@ theorem var1_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR1 P X α) // P] > α.val
       constructor
       · exact hqin
       · rw [hqp]; exact hg
-    have : q ≤ t := by subst h; sorry --exact Finset.le_max' 𝓢 q hqs
+    have : q ≤ t := by subst h; exact Finset.le_max' 𝓢 q hqs
     linarith
 
 notation "VaR[" X "//" P ", " α "]" => FinVaR1 P X α
