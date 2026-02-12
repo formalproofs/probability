@@ -193,8 +193,66 @@ variable (M : MDP) (t : ℕ)
 
 -- TODO: the following two proofs probably need to use induction 
 
-theorem hist_idx_LeftInverse : LeftInverse (M.idx_to_hist' t) (M.hist_to_idx' t) := by sorry 
-    
+  theorem hist_idx_LeftInverse (M : MDP) : LeftInverse M.idx_to_hist' M.hist_to_idx'  := by
+  intro M h
+  unfold idx_to_hist' hist_to_idx'
+  simp only
+  -- Show that the index is valid
+  have h_valid : (h.length, (M.hist_to_idx h).val) ∈ M.hist_idx_valid := by
+    unfold hist_idx_valid
+    simp only [Set.mem_setOf_eq]
+    exact (M.hist_to_idx h).2
+  simp [h_valid]
+  -- Prove by induction on the history
+  induction h with
+  | init s =>
+    unfold hist_to_idx idx_to_hist
+    simp only [Hist.length, numhist, pow_zero, mul_one]
+    have h : s.val < M.S * 1 := by simp; exact s.2
+    simp [h]
+  | foll h' a s ih =>
+    unfold hist_to_idx
+    simp only [Hist.length]
+    -- The encoded index for foll h' a s
+    let n' := M.hist_to_idx h'
+    let n := M.SA * ↑n' + (a.val * M.S + s.val)
+    -- Need to show idx_to_hist decodes this correctly
+    have h_lt : n < M.numhist (h'.length + 1) := (M.hist_to_idx (Hist.foll h' a s)).2
+    unfold idx_to_hist
+    simp only [Hist.length]
+    -- Show that modular arithmetic recovers a and s
+    have h_sa_mod : n % M.SA = a.val * M.S + s.val := by
+      unfold n
+      rw [Nat.add_mod, Nat.mul_mod_right]
+      simp
+      have : a.val * M.S + s.val < M.SA := by
+        unfold MDP.SA
+        calc a.val * M.S + s.val < a.val * M.S + M.S := by omega
+             _ ≤ (M.A - 1) * M.S + M.S := by omega
+             _ = M.A * M.S := by omega
+      exact Nat.mod_eq_of_lt this
+    -- Show that division recovers n'
+    have h_div : (n - n % M.SA) / M.SA = ↑n' := by
+      rw [h_sa_mod]
+      exact hist_to_idx_foll_decompose M h' a s
+    -- Now combine to show the full result
+    simp only [n, h_sa_mod, h_div]
+    congr 1
+    · -- Show the recursive history is recovered
+      have : (M.idx_to_hist h'.length ⟨↑n', n'.2⟩).val = h' := by
+        have ih' := ih
+        unfold idx_to_hist' hist_to_idx' at ih'
+        simp only at ih'
+        have h_valid' : (h'.length, n'.val) ∈ M.hist_idx_valid := by
+          unfold hist_idx_valid
+          simp only [Set.mem_setOf_eq]
+          exact n'.2
+        simp [h_valid'] at ih'
+        exact ih'
+      exact this
+    · -- States match (trivial from definition)
+      rfl  
+
 -- this is a RightInvOn because we can possibly feed an incorrect index to the history 
 theorem hist_idx_RightInverse : RightInverse (M.idx_to_hist' t) (M.hist_to_idx' t) := sorry 
 
