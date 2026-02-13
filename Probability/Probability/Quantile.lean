@@ -14,10 +14,10 @@ variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ) (q v : ℚ)
 def IsQuantile  : Prop := ℙ[X ≤ᵣ q // P ] ≥ α ∧ ℙ[X ≥ᵣ q // P] ≥ 1 - α
 
 /-- Proof that `q` is a lower bound on the `α`-quantile of `X` --/
-def IsQuantileLower : Prop := ℙ[ X ≥ᵣ q // P] ≥ 1 - α
+def IsQuantileLower : Prop := ℙ[X ≥ᵣ q // P] ≥ 1 - α
 
 /-- Set of quantiles at a level `α`  --/
-def Quantile : Set ℚ := { q | IsQuantile P X α q}
+def Quantile : Set ℚ := {q | IsQuantile P X α q}
 
 /-- Set of lower bounds on a quantile at `α` -/
 def QuantileLower : Set ℚ := {q | IsQuantileLower P X α q}
@@ -28,7 +28,7 @@ theorem qset_lb : q ∈ Quantile P X α → ℙ[X ≤ᵣ q // P ] ≥ α := by s
 
 theorem qset_ub : q ∈ Quantile P X α → ℙ[X ≥ᵣ q // P] ≥ 1 - α := by simp_all [Quantile, IsQuantile]
 
-theorem qset_def : q ∈ Quantile P X α ↔ ℙ[X ≤ᵣ q // P ] ≥ α ∧ ℙ[X ≥ᵣ q // P] ≥ 1 - α := by simp_all [Quantile, IsQuantile]
+theorem qset_def : q ∈ Quantile P X α ↔ ℙ[X ≤ᵣ q // P] ≥ α ∧ ℙ[X ≥ᵣ q // P] ≥ 1 - α := by simp_all [Quantile, IsQuantile]
 
 theorem qset_not_def : q ∉ Quantile P X α ↔ ℙ[ X ≤ᵣ q // P ] < α ∨ ℙ[ X ≥ᵣ q // P] < 1 - α := by
     constructor; repeat intro h2; grind [qset_def]
