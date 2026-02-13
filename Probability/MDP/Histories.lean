@@ -181,7 +181,8 @@ open Function
 
 
 /-- A more convenient definition for constructing inverses  -/
-def MDP.hist_to_idx' (M : MDP) (t : ℕ) (h : HistT M t) : Fin (M.numhist t) := h.property ▸ M.hist_to_idx h.val
+def MDP.hist_to_idx' (M : MDP) (t : ℕ) (h : HistT M t) : Fin (M.numhist t) := 
+    h.property ▸ M.hist_to_idx h.val
 
 /-- A more convenient definition for constructing inverses  -/
 def MDP.idx_to_hist' (M : MDP) (t : ℕ) (i : Fin (M.numhist t)) : HistT M t := 
@@ -191,21 +192,33 @@ def MDP.hist_idx_valid (M : MDP) := {ti : ℕ × ℕ | ti.2 < M.numhist ti.1}
 
 variable (M : MDP) (t : ℕ) 
 
--- TODO: the following two proofs probably need to use induction 
 
-  theorem hist_idx_LeftInverse (M : MDP) : LeftInverse M.idx_to_hist' M.hist_to_idx'  := by
-  intro M h
-  unfold idx_to_hist' hist_to_idx'
-  simp only
+theorem state_of_hist_len0 (h : M.HistT 0) : ∃s, h.val = Hist.init s := sorry 
+
+theorem state_of_hist_len_t (h : M.HistT t.succ) : ∃h',∃a,∃s, h.val = Hist.foll h' a s := sorry 
+
+
+theorem hist_idx_LeftInverse (M : MDP) : LeftInverse (M.idx_to_hist' t) (M.hist_to_idx' t)  := by
+  intro h
+  unfold MDP.idx_to_hist' MDP.hist_to_idx'
+  --simp only
   -- Show that the index is valid
-  have h_valid : (h.length, (M.hist_to_idx h).val) ∈ M.hist_idx_valid := by
-    unfold hist_idx_valid
+  have h_valid : ⟨h.1.length, (M.hist_to_idx h.1).val⟩ ∈ M.hist_idx_valid := by
+    unfold MDP.hist_idx_valid
     simp only [Set.mem_setOf_eq]
-    exact (M.hist_to_idx h).2
-  simp [h_valid]
+    exact (M.hist_to_idx h.1).2
+  simp -- TODO: remove non-terminal simps
   -- Prove by induction on the history
-  induction h with
-  | init s =>
+  induction t with --TODO: 
+    | zero => 
+        sorry 
+        /- unfold MDP.hist_to_idx MDP.idx_to_hist
+        simp 
+        have h : s.val < M.S * 1 := by simp; exact s.2
+        simp
+        sorry -/
+    | succ t' => sorry 
+  /-| init s =>
     unfold hist_to_idx idx_to_hist
     simp only [Hist.length, numhist, pow_zero, mul_one]
     have h : s.val < M.S * 1 := by simp; exact s.2
@@ -252,7 +265,7 @@ variable (M : MDP) (t : ℕ)
       exact this
     · -- States match (trivial from definition)
       rfl  
-
+-/
 -- this is a RightInvOn because we can possibly feed an incorrect index to the history 
 theorem hist_idx_RightInverse : RightInverse (M.idx_to_hist' t) (M.hist_to_idx' t) := sorry 
 
