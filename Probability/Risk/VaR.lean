@@ -19,7 +19,6 @@ def RiskLevel := { α : ℚ // IsRiskLevel α}
 --instance instCoeRiskUnit : Coe RiskLevel UnitI where
 --  coe := fun ⟨v,c⟩ => ⟨v, ⟨c.1, le_of_lt c.2⟩ ⟩
 
-
 def FinVaR1Set (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : Finset ℚ :=
   let 𝓧 := Finset.univ.image X
   𝓧.filter (fun t ↦ ℙ[X <ᵣ t // P] ≤ α.val)
@@ -38,31 +37,13 @@ theorem FinVar1Set_nonempty (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) :
       unfold IsRiskLevel at this
       linarith
 
+/- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
+    If we assume 0 ≤ α < 1, then the "else 0" branch is never used. -/
 def FinVaR1 (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : ℚ :=
   let 𝓧 := Finset.univ.image X
   let 𝓢 := 𝓧.filter (fun t ↦ ℙ[X <ᵣ t // P] ≤ α.val)
   have h : 𝓢.Nonempty := FinVar1Set_nonempty P X α
   𝓢.max' h
-
-/- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
-    If we assume 0 ≤ α < 1, then the "else 0" branch is never used. -/
-
----I redefined it above if we want to pull out the proof tht it is nonempty!
-
--- def FinVaR1 (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : ℚ :=
---   let 𝓧 := Finset.univ.image X
---   let 𝓢 := 𝓧.filter (fun t ↦ ℙ[X <ᵣ t // P] ≤ α.val)
---   have h : 𝓢.Nonempty := by
---     apply Finset.filter_nonempty_iff.mpr
---     let xmin := (Finset.univ.image X).min' (rv_image_nonempty P X)
---     use xmin
---     constructor
---     · exact Finset.min'_mem 𝓧 (rv_image_nonempty P X)
---     · have : ℙ[X <ᵣ xmin // P] = 0 := prob_lt_min_eq_zero
---       have := α.2
---       unfold IsRiskLevel at this
---       linarith
---   𝓢.max' h
 
 variable {α : RiskLevel}
 
@@ -105,9 +86,7 @@ def IsVaR : Prop := IsGreatest (Quantile P X α.val) v
 /-- A simpler, equivalent definition of Value at Risk  -/
 def IsVaR2 : Prop := IsGreatest (QuantileLower P X α.val) v
 
-
 variable {n : ℕ} {P : Findist n} {X Y : FinRV n ℚ} {α : RiskLevel} {q v q₁ q₂ : ℚ}
-
 
 
 theorem var2_prob_cond : IsVaR2 P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ α.val < ℙ[ X ≤ᵣ v // P]) :=
