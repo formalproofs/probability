@@ -166,7 +166,7 @@ theorem var_eq_var2 : IsVaR P X α v ↔ IsVaR2 P X α v := by
 theorem var_prob_cond : IsVaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ α.val < ℙ[ X ≤ᵣ v // P]) :=
   by rw[var_eq_var2]; exact var2_prob_cond 
 
------------------------------ Fast VaR computation -------------------------------------------------------
+----------------------------- Fast VaR computation -------------------------------------------------
 
 section FasterVaR
 
