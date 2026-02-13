@@ -136,6 +136,16 @@ theorem rv_lt_epsi_eq_le (P : Findist n) : ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) :
 end Rounding
 
 
+section Transformations
+
+-- Monotone transformation of the random variable 
+section Monotone 
+
+
+
+end Monotone
+
+
 section CashInvariance 
 
 variable (c : ℚ) {x : ℚ}
@@ -149,6 +159,8 @@ theorem rv_ge_cashinvar : (X ≥ᵣ x) = (X + c•1 ≥ᵣ x + c) := by ext ω; 
 theorem rv_gt_cashinvar : (X >ᵣ x) = (X + c•1 >ᵣ x + c) := by ext ω; simp
 
 end CashInvariance
+
+end Transformations
 
 
 end RandomVariables
