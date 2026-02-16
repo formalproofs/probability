@@ -140,6 +140,7 @@ section Transformations
 
 -- Monotone transformation of the random variable 
 section Monotone 
+-- TODO: The proofs below are quite repetitive; may be worth it to simplify them
 
 open Function 
 
@@ -149,38 +150,38 @@ theorem bool_ineq {a b : Bool} (h : a → b) : (a ≤ b) := h
 
 theorem bool_eq {a b : Bool} (h1 : a → b) (h2 : b → a) : a = b := Bool.le_antisymm h1 h2
 
-theorem strict_mono_reverse {x y : ℚ} (h : StrictMono f) : f x ≤ f y → x ≤ y := by by_contra!; have : f y < f x:= h this.2; linarith 
+
+--- LE
 
 theorem rv_le_monotone (hm : Monotone f) : (X ≤ᵣ x) ≤ (f ∘ X ≤ᵣ f x) := 
-    by intro ω; 
-       apply bool_ineq 
-       intro h 
-       have h2 : X ω ≤ x := by simpa using h 
-       simp [hm h2]
+    by intro ω; apply bool_ineq; simpa using fun a ↦ hm a
 
 theorem rv_le_strictmono_eq (hm : StrictMono f) : (X ≤ᵣ x) = (f ∘ X ≤ᵣ f x) := 
-    by ext ω; 
-       apply bool_eq 
-       · simp
-         intro h 
-         have h2 : X ω ≤ x := by simpa using h 
-         simp [hm.monotone h2]
-       · simpa using strict_mono_reverse hm 
+    by ext ω; apply bool_eq; simpa using fun a ↦ hm.monotone a; simpa using hm.le_iff_le.mp
 
-theorem rv_lt_strictmono_invar (hm : StrictMono f) : (X <ᵣ x) ≤ (f ∘ X <ᵣ f x) := 
-    by intro ω; 
-       apply bool_ineq 
-       intro h 
-       have h2 : X ω < x := by simpa using h 
-       simp [hm h2]
+--- LT
 
-theorem rv_ge_monotone_invar (hm : Monotone f) : (X ≤ᵣ x) ≤ (f ∘ X ≤ᵣ f x) := 
-    by intro ω; by_cases hω : X ω ≤ x; simp [hm hω]; simp [hω] 
+theorem rv_lt_strictmono_invar (hm : StrictMono f) : (X <ᵣ x) = (f ∘ X <ᵣ f x) := 
+    by ext ω; apply bool_eq; simpa using fun a => hm a; simpa using hm.lt_iff_lt.mp 
 
-theorem rv_gt_monotone_invar (hm : Monotone f) : (X <ᵣ x) ≤ (f ∘ X ≤ᵣ f x) := 
-    by intro ω; by_cases hω : X ω < x; simp [hm (Rat.le_of_lt hω)]; simp [hω] 
+--- GE
+
+theorem rv_ge_monotone (hm : Monotone f) : (X ≥ᵣ x) ≤ (f ∘ X ≥ᵣ f x) := 
+    by intro ω; apply bool_ineq; simpa using fun a ↦ hm a
+
+theorem rv_ge_strictmono_eq (hm : StrictMono f) : (X ≥ᵣ x) = (f ∘ X ≥ᵣ f x) := 
+    by ext ω; apply bool_eq; simpa using fun a ↦ hm.monotone a; simpa using hm.le_iff_le.mp
+
+--- GT
+
+theorem rv_gt_strictmono_invar (hm : StrictMono f) : (X >ᵣ x) = (f ∘ X >ᵣ f x) := 
+    by ext ω; apply bool_eq; simpa using fun a => hm a; simpa using hm.lt_iff_lt.mp 
+
 
 end Monotone
+
+-- TODO: Add similar results for anti-tone functions
+
 
 
 section CashInvariance 
