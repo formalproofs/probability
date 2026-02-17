@@ -18,6 +18,9 @@ import Mathlib.Data.Fin.Tuple.Sort -- for Equiv.Perm and permutation operations
 
 namespace Findist
 
+example {p q : Prop} (h : ¬p ∨ q) : p → q := 
+  fun x => h.elim (fun np => (np x).elim) (fun qi => qi)
+
 variable {n : ℕ} {P : Findist n} {B : FinRV n Bool}
 
 theorem ge_zero : 0 ≤ ℙ[B // P] := 
@@ -67,8 +70,7 @@ theorem rv_le_max_one : (X ≤ᵣ (FinRV.max P X)) = 1 :=
        simpa using rv_omega_le_max P ω
 
 theorem rv_max_in_image : (FinRV.max P X) ∈ Finset.univ.image X :=
-    by unfold FinRV.max
-       exact Finset.max'_mem (Finset.image X Finset.univ) (rv_image_nonempty P X)
+     Finset.max'_mem (Finset.image X Finset.univ) (rv_image_nonempty P X)
 
 theorem rv_omega_ge_min (P : Findist n) : ∀ω, X ω ≥ (FinRV.min P X) :=
     by intro ω
@@ -80,7 +82,7 @@ theorem rv_ge_min_one : (X ≥ᵣ (FinRV.min P X)) = 1 :=
        unfold FinRV.geq FinRV.min
        simpa using rv_omega_ge_min P ω
 
-theorem rv_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ∀ ω, (X ≥ᵣ t₂) ω →(X >ᵣ t₁) ω   :=
+theorem rv_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ∀ ω, (X ≥ᵣ t₂) ω → (X >ᵣ t₁) ω   :=
     by intro h ω pre
        simp [FinRV.gt, FinRV.geq] at pre ⊢
        linarith
