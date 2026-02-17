@@ -80,7 +80,6 @@ theorem rv_ge_min_one : (X ≥ᵣ (FinRV.min P X)) = 1 :=
        unfold FinRV.geq FinRV.min
        simpa using rv_omega_ge_min P ω
 
-
 theorem rv_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ∀ ω, (X ≥ᵣ t₂) ω →(X >ᵣ t₁) ω   :=
     by intro h ω pre
        simp [FinRV.gt, FinRV.geq] at pre ⊢
@@ -146,35 +145,30 @@ open Function
 
 variable {f : ℚ → ℚ} {x : ℚ}  
 
-theorem bool_ineq {a b : Bool} (h : a → b) : (a ≤ b) := h
-
-theorem bool_eq {a b : Bool} (h1 : a → b) (h2 : b → a) : a = b := Bool.le_antisymm h1 h2
-
-
 --- LE
 
-theorem rv_le_monotone (hm : Monotone f) : (X ≤ᵣ x) ≤ (f ∘ X ≤ᵣ f x) := 
+theorem rv_f_le_monotone (hm : Monotone f) : (X ≤ᵣ x) ≤ (f ∘ X ≤ᵣ f x) := 
     by intro ω; apply bool_ineq; simpa using fun a ↦ hm a
 
-theorem rv_le_strictmono_eq (hm : StrictMono f) : (X ≤ᵣ x) = (f ∘ X ≤ᵣ f x) := 
+theorem rv_f_le_strictmono (hm : StrictMono f) : (X ≤ᵣ x) = (f ∘ X ≤ᵣ f x) := 
     by ext ω; apply bool_eq; simpa using fun a ↦ hm.monotone a; simpa using hm.le_iff_le.mp
 
 --- LT
 
-theorem rv_lt_strictmono_invar (hm : StrictMono f) : (X <ᵣ x) = (f ∘ X <ᵣ f x) := 
+theorem rv_f_lt_strictmono (hm : StrictMono f) : (X <ᵣ x) = (f ∘ X <ᵣ f x) := 
     by ext ω; apply bool_eq; simpa using fun a => hm a; simpa using hm.lt_iff_lt.mp 
 
 --- GE
 
-theorem rv_ge_monotone (hm : Monotone f) : (X ≥ᵣ x) ≤ (f ∘ X ≥ᵣ f x) := 
+theorem rv_f_ge_monotone (hm : Monotone f) : (X ≥ᵣ x) ≤ (f ∘ X ≥ᵣ f x) := 
     by intro ω; apply bool_ineq; simpa using fun a ↦ hm a
 
-theorem rv_ge_strictmono_eq (hm : StrictMono f) : (X ≥ᵣ x) = (f ∘ X ≥ᵣ f x) := 
+theorem rv_f_ge_strictmono (hm : StrictMono f) : (X ≥ᵣ x) = (f ∘ X ≥ᵣ f x) := 
     by ext ω; apply bool_eq; simpa using fun a ↦ hm.monotone a; simpa using hm.le_iff_le.mp
 
 --- GT
 
-theorem rv_gt_strictmono_invar (hm : StrictMono f) : (X >ᵣ x) = (f ∘ X >ᵣ f x) := 
+theorem rv_f_gt_strictmono (hm : StrictMono f) : (X >ᵣ x) = (f ∘ X >ᵣ f x) := 
     by ext ω; apply bool_eq; simpa using fun a => hm a; simpa using hm.lt_iff_lt.mp 
 
 
@@ -208,6 +202,7 @@ end RandomVariables
 section Probability 
 
 variable {n : ℕ} {P : Findist n} {A B C : FinRV n Bool} {X Y : FinRV n ℚ} {t t₁ t₂ : ℚ}
+
 
 theorem prob_compl_sums_to_one : ℙ[B // P] + ℙ[¬ᵣB // P] = 1 := 
     by rw [prob_eq_exp_ind, prob_eq_exp_ind, ←exp_additive_two, one_of_ind_bool_or_not]
@@ -266,6 +261,8 @@ theorem prob_lt_of_ge :  ℙ[X <ᵣ t // P] = 1 - ℙ[X ≥ᵣ t // P] := by
   rw [← prob_lt_compl_ge]
   ring
 
+theorem prob_bool_monotone : A ≤ B → ℙ[A // P] ≤ ℙ[B // P] := fun h => exp_monotone (ind_monotone h)
+
 theorem prob_le_monotone : X ≤ Y → t₁ ≤ t₂ → ℙ[Y ≤ᵣ t₁ // P] ≤ ℙ[X ≤ᵣ t₂ // P] := by 
   intro hxy ht 
   exact exp_monotone (rvle_monotone hxy ht)
@@ -286,7 +283,7 @@ theorem prob_gt_antitone : X ≤ Y → t₁ ≤ t₂ → ℙ[Y >ᵣ t₁ // P] �
   have := prob_le_monotone (P := P) hxy ht 
   linarith 
 
-theorem prob_lt_le_monotone : q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t // P] :=
+theorem prob_lt_le_monotone {q : ℚ} : q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t // P] :=
     by intro h
        unfold probability dotProduct
        apply Finset.sum_le_sum
@@ -299,9 +296,7 @@ theorem prob_lt_le_monotone : q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t //
               by_cases h5 : X ω < q <;> simp [h5] -- <;> applies to both cases
        exact mul_le_mul_of_nonneg_left h2 (P.nneg ω)
 
-
 theorem prob_le_eq_one : ℙ[X ≤ᵣ (FinRV.max P X) // P] = 1 := by rw [rv_le_max_one]; exact prob_one_of_true P
-
 
 theorem prob_ge_eq_one : ℙ[X ≥ᵣ (FinRV.min P X) // P] = 1 := by rw [rv_ge_min_one]; exact prob_one_of_true P
 
@@ -326,6 +321,44 @@ theorem prob_lt_epsi_eq_le : ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P]
 end Rounding 
 
 
+section Transformations
+
+section Monotone
+
+-- TODO: The proofs below are quite repetitive; may be worth it to simplify them
+
+open Function 
+
+variable {f : ℚ → ℚ} {x : ℚ}  
+
+--- LE
+
+theorem prob_f_le_monotone (hm : Monotone f) : ℙ[X ≤ᵣ x // P] ≤ ℙ[f ∘ X ≤ᵣ f x // P] := 
+   prob_bool_monotone (rv_f_le_monotone hm)
+
+theorem prob_f_le_strictmono (hm : StrictMono f) : ℙ[X ≤ᵣ x // P] = ℙ[f ∘ X ≤ᵣ f x // P] := 
+  congrArg (probability P) (rv_f_le_strictmono hm) 
+--- LT
+
+theorem prob_f_lt_strictmono (hm : StrictMono f) : ℙ[X <ᵣ x // P] = ℙ[f ∘ X <ᵣ f x // P] := 
+  congrArg (probability P) (rv_f_lt_strictmono hm) 
+
+--- GE
+
+theorem prob_f_ge_monotone (hm : Monotone f) : ℙ[X ≥ᵣ x // P] ≤ ℙ[f ∘ X ≥ᵣ f x // P] := 
+   prob_bool_monotone (rv_f_ge_monotone hm)
+
+theorem prob_f_ge_strictmono (hm : StrictMono f) : ℙ[X ≥ᵣ x // P] = ℙ[f ∘ X ≥ᵣ f x // P] := 
+  congrArg (probability P) (rv_f_ge_strictmono hm) 
+
+--- GT
+
+theorem prob_f_gt_strictmono (hm : StrictMono f) : ℙ[X >ᵣ x // P] = ℙ[f ∘ X >ᵣ f x // P] := 
+  congrArg (probability P) (rv_f_gt_strictmono hm) 
+
+
+end Monotone 
+
 section CashInvariance 
 
 variable (c : ℚ) {x : ℚ}
@@ -339,6 +372,8 @@ theorem prob_ge_cashinvar : ℙ[X ≥ᵣ x // P] = ℙ[X + c•1 ≥ᵣ x + c //
 theorem prob_gt_cashinvar : ℙ[X >ᵣ x // P] = ℙ[X + c•1 >ᵣ x + c // P] := congrArg (probability P) (rv_gt_cashinvar c)
 
 end CashInvariance
+
+end Transformations
 end Probability 
 
 ------------------------------ CDF ---------------------------

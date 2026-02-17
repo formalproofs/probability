@@ -14,6 +14,9 @@ theorem false_of_le_gt {x y : ℚ} : x ≤ y → x > y → False :=
 theorem false_of_lt_ge {x y : ℚ} : x < y → x ≥ y → False :=
     fun h1 h2 => false_of_le_gt h2 h1
  
+theorem bool_ineq {a b : Bool} (h : a → b) : (a ≤ b) := h
+
+theorem bool_eq {a b : Bool} (h1 : a → b) (h2 : b → a) : a = b := Bool.le_antisymm h1 h2
 
 --------------------------- Findist ---------------------------------------------------------------
 

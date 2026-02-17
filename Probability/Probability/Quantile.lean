@@ -24,6 +24,8 @@ def QuantileLower : Set ℚ := {q | IsQuantileLower P X α q}
 
 end Definition
 
+variable {n : ℕ} {P : Findist n} {X Y : FinRV n ℚ} {α : ℚ} {q v : ℚ}
+
 theorem qset_lb : q ∈ Quantile P X α → ℙ[X ≤ᵣ q // P ] ≥ α := by simp_all [Quantile, IsQuantile]
 
 theorem qset_ub : q ∈ Quantile P X α → ℙ[X ≥ᵣ q // P] ≥ 1 - α := by simp_all [Quantile, IsQuantile]
@@ -59,9 +61,9 @@ theorem qset_of_cond_lt : ℙ[X ≤ᵣ q // P] ≥ α ∧ ℙ[ X <ᵣ q // P] �
 theorem qsetlower_of_cond : ℙ[X ≤ᵣ q // P] ≥ α ∧ ℙ[ X ≥ᵣ q // P] ≥ 1 - α → q ∈ QuantileLower P X α :=
     by intro h; simp_all [QuantileLower, IsQuantileLower]
 
-theorem qsetlower_of_cond_lt : ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X <ᵣ q // P] ≤ α → q ∈ QuantileLower P X α :=
+theorem qsetlower_of_cond_lt : ℙ[X ≤ᵣ q // P] ≥ α ∧ ℙ[ X <ᵣ q // P] ≤ α → q ∈ QuantileLower P X α :=
     by intro h1
-       have h2 : ℙ[ X ≥ᵣ q // P] ≥ 1 - α := by rw [prob_ge_of_lt]; linarith
+       have h2 : ℙ[X ≥ᵣ q // P] ≥ 1 - α := by rw [prob_ge_of_lt]; linarith
        exact qsetlower_of_cond ⟨h1.1, h2⟩
 
 
@@ -75,6 +77,46 @@ theorem quantile_le_monotone : X ≤ Y → IsCofinalFor (QuantileLower P X α) (
   have hq₁ := le_refl q₁
   exact ⟨q₁, ⟨le_trans hvar₁ (prob_ge_antitone hle hq₁), hq₁⟩⟩
 
+section Transformations
+
+variable {f : ℚ → ℚ}
+
+-- the reverse implication does not hold
+theorem quantile_f_monotone (hm : Monotone f) : q ∈ Quantile P X α → (f q) ∈ Quantile P (f ∘ X) α := by
+    intro h; grw [qset_def, prob_f_le_monotone hm, prob_f_ge_monotone hm] at h; exact h
+
+theorem quantile_f_monotone_set (hm : Monotone f) : f '' Quantile P X α ⊆  Quantile P (f ∘ X) α := by
+    intro q h 
+    obtain ⟨x, hx⟩ := h 
+    rw [←hx.2] 
+    exact quantile_f_monotone hm hx.1 
+
+theorem quantile_f_strictmono (hm : StrictMono f) : q ∈ Quantile P X α ↔ (f q) ∈ Quantile P (f ∘ X) α := by 
+    rw [qset_def, qset_def, prob_f_le_strictmono hm, prob_f_ge_strictmono hm]
+
+#check Set.image_eq_image
+
+example { X Y : Set ℚ} (h : ∀x, x ∈ X ↔ x ∈ Y) : X = Y := by exact Set.ext h 
+
+example { X Y : Set ℚ} (h : ∀x, x ∈ X ↔ f x ∈ Y) : f '' X = Y := by sorry -- FALSE, cannot prove the result below directly
+
+theorem quantile_f_strictmono_set (hm : StrictMono f) : f '' Quantile P X α = Quantile P (f ∘ X) α := by 
+      ext q 
+      rw [Set.image]
+      sorry --see comment below
+
+
+-- the reverse implication does not hold
+theorem quantilelower_f_monotone (hm : Monotone f) : q ∈ QuantileLower P X α → (f q) ∈ QuantileLower P (f ∘ X) α := by
+    intro h; grw [qsetlower_def, prob_f_ge_monotone hm] at h; exact h
+
+theorem quantilelower_f_strictmono (hm : StrictMono f) : q ∈ QuantileLower P X α ↔ (f q) ∈ QuantileLower P (f ∘ X) α := by 
+    rw [qsetlower_def, qsetlower_def, prob_f_ge_strictmono hm]
+
+end Transformations
+
+
+variable {c : ℚ}
 
 theorem quantilelower_cashinv : q ∈ QuantileLower P X α ↔ (q+c) ∈ QuantileLower P (X+c•1) α := by
   constructor
@@ -100,6 +142,9 @@ theorem quantilelower_cash_image : QuantileLower P (X+c•1) α = (fun x ↦ x+c
     rw [quantilelower_cashinv (c:=c)] at ha
     rw [←ha.2]
     exact ha.1
+
+
+    
 
 end Statistic  
 

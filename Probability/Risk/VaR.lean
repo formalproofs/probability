@@ -23,27 +23,23 @@ def FinVaR1Set (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : Finset ℚ :
   let 𝓧 := Finset.univ.image X
   𝓧.filter (fun t ↦ ℙ[X <ᵣ t // P] ≤ α.val)
 
-theorem FinVar1Set_nonempty (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : (FinVaR1Set (n := n) P X α).Nonempty :=
-  by
-    unfold FinVaR1Set
-    let 𝓧 := Finset.univ.image X
+theorem FinVar1Set_nonempty (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : (FinVaR1Set (n := n) P X α).Nonempty := by
     apply Finset.filter_nonempty_iff.mpr
     let xmin := (Finset.univ.image X).min' (rv_image_nonempty P X)
     use xmin
     constructor
-    · exact Finset.min'_mem 𝓧 (rv_image_nonempty P X)
+    · exact Finset.min'_mem (Finset.univ.image X) (rv_image_nonempty P X)
     · have : ℙ[X <ᵣ xmin // P] = 0 := prob_lt_min_eq_zero
-      have := α.2
-      unfold IsRiskLevel at this
+      have : 0 ≤ α.val ∧ α.val < 1 := α.2
       linarith
 
-/- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
+/-- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
     If we assume 0 ≤ α < 1, then the "else 0" branch is never used. -/
 def FinVaR1 (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : ℚ :=
-  let 𝓧 := Finset.univ.image X
-  let 𝓢 := 𝓧.filter (fun t ↦ ℙ[X <ᵣ t // P] ≤ α.val)
-  have h : 𝓢.Nonempty := FinVar1Set_nonempty P X α
-  𝓢.max' h
+   let 𝓧 := Finset.univ.image X
+   let 𝓢 := 𝓧.filter (fun t ↦ ℙ[X <ᵣ t // P] ≤ α.val)
+   have h : 𝓢.Nonempty := FinVar1Set_nonempty P X α
+   𝓢.max' h
 
 variable {α : RiskLevel}
 
@@ -325,7 +321,8 @@ variable {P : Findist n} {X Y : FinRV n ℚ} {q q₁ v₁ v₂ c : ℚ} {α : Ri
 theorem var2_monotone : X ≤ Y → IsVaR2 P X α v₁ → IsVaR2 P Y α v₂ → v₁ ≤ v₂ :=
   fun hle hv1 hv2 => upperBounds_mono_of_isCofinalFor (quantile_le_monotone hle) hv2.2 hv1.1
 
-theorem const_monotone_univ : Monotone (fun x ↦ x + c)  := add_left_mono
+
+theorem const_monotone_univ : StrictMono (fun x ↦ x + c)  := add_left_strictMono
 
 theorem VaR2_translation_invariant : IsVaR2 P X α v → IsVaR2 P (X+c•1) α (v+c) := by
     intro h
