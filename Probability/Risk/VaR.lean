@@ -275,39 +275,24 @@ def FinVaR (α : RiskLevel) (P : Findist n) (X : FinRV n ℚ) : ℚ :=
     | Nat.zero => 0 -- this case is impossible because n > 0 for Findist
     | Nat.succ n' =>
       let σ := Tuple.sort X
+      let h1 : (1 : Fin (Nat.succ n') → ℚ) ∘ σ ⬝ᵥ P.p ∘ σ = 1 ⬝ᵥ P.p :=
+          comp_equiv_dotProduct_comp_equiv (1 : Fin (Nat.succ n') → ℚ) P.p σ
+      let h2 : ((1 : Fin (Nat.succ n') → ℚ) ∘ σ) = 1 := by
+          funext i
+          simp [Function.comp]
+      let h3 : (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ (P.p ∘ σ) = (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ P.p := by
+          simpa [h2] using h1
+      let h4 : (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ (P.p ∘ σ) = 1 := by
+          calc
+            (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ (P.p ∘ σ) = (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ P.p := h3
+            _ = 1 := P.prob
+
       X <| quantile_srt n' α (P.p ∘ σ) (X ∘ σ)
       (Tuple.monotone_sort X)
       (by intro ω; simpa [Function.comp] using P.nneg (σ ω))
-      --h3 : α.val < 1 ⬝ᵥ p
-      (by
-        have h1 : (1 : Fin (Nat.succ n') → ℚ) ∘ σ ⬝ᵥ P.p ∘ σ = 1 ⬝ᵥ P.p :=
-          comp_equiv_dotProduct_comp_equiv (1 : Fin (Nat.succ n') → ℚ) P.p σ
-        have h2 : ((1 : Fin (Nat.succ n') → ℚ) ∘ σ) = 1 := by
-          funext i
-          simp [Function.comp]
-        have h3 : (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ (P.p ∘ σ) = (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ P.p := by
-          simpa [h2] using h1
-        have h4 : (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ (P.p ∘ σ) = 1 := by
-          calc
-            (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ (P.p ∘ σ) = (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ P.p := h3
-            _ = 1 := P.prob
-        simpa [h4] using (α.property).right)
-      --h4 : 0 < 1 ⬝ᵥ p
-      ----this is all the same except for the last line
-      ----is there a way to avoid repeating it???
-      (by
-        have h1 : (1 : Fin (Nat.succ n') → ℚ) ∘ σ ⬝ᵥ P.p ∘ σ = 1 ⬝ᵥ P.p :=
-          comp_equiv_dotProduct_comp_equiv (1 : Fin (Nat.succ n') → ℚ) P.p σ
-        have h2 : ((1 : Fin (Nat.succ n') → ℚ) ∘ σ) = 1 := by
-          funext i
-          simp [Function.comp]
-        have h3 : (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ (P.p ∘ σ) = (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ P.p := by
-          simpa [h2] using h1
-        have h4 : (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ (P.p ∘ σ) = 1 := by
-          calc
-            (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ (P.p ∘ σ) = (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ P.p := h3
-            _ = 1 := P.prob
-        simp [h4])
+      (by simpa [h4] using (α.property).right)
+      (by simp [h4])
+
 
 end FasterVaR
 
