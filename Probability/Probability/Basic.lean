@@ -18,9 +18,6 @@ import Mathlib.Data.Fin.Tuple.Sort -- for Equiv.Perm and permutation operations
 
 namespace Findist
 
-example {p q : Prop} (h : ¬p ∨ q) : p → q := 
-  fun x => h.elim (fun np => (np x).elim) (fun qi => qi)
-
 variable {n : ℕ} {P : Findist n} {B : FinRV n Bool}
 
 theorem ge_zero : 0 ≤ ℙ[B // P] := 
@@ -319,6 +316,7 @@ theorem prob_lt_epsi_eq_le_of_lt :
 theorem prob_lt_epsi_eq_le : ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] :=
       let ⟨q, hq⟩ := rv_lt_epsi_eq_le X t P
       Exists.intro q ⟨hq.1, congrArg (probability P) hq.2⟩
+
 
 end Rounding 
 

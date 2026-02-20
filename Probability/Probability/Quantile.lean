@@ -77,41 +77,63 @@ theorem quantile_le_monotone : X ≤ Y → IsCofinalFor (QuantileLower P X α) (
   have hq₁ := le_refl q₁
   exact ⟨q₁, ⟨le_trans hvar₁ (prob_ge_antitone hle hq₁), hq₁⟩⟩
 
+section Bounds 
+
+variable {b : ℚ}
+
+theorem quantile_ub_atomic  (h : IsGreatest (Quantile P X α) b) : ℙ[X =ᵣ b // P] > 0 := by 
+    unfold IsGreatest upperBounds at h 
+    by_contra!
+    obtain ⟨hb₁, hb₂⟩ := h 
+    sorry 
+
+theorem prob_atomic_omega (h : ℙ[X =ᵣ b // P] > 0) : ∃ω, X ω = b := sorry 
+
+end Bounds 
+
+
 section Transformations
 
 variable {f : ℚ → ℚ}
 
--- the reverse implication does not hold
+-- the reverse implications of the following results do not hold
 theorem quantile_f_monotone (hm : Monotone f) : q ∈ Quantile P X α → (f q) ∈ Quantile P (f ∘ X) α := by
     intro h; grw [qset_def, prob_f_le_monotone hm, prob_f_ge_monotone hm] at h; exact h
-
-theorem quantile_f_monotone_set (hm : Monotone f) : f '' Quantile P X α ⊆  Quantile P (f ∘ X) α := by
-    intro q h 
-    obtain ⟨x, hx⟩ := h 
-    rw [←hx.2] 
-    exact quantile_f_monotone hm hx.1 
 
 theorem quantile_f_strictmono (hm : StrictMono f) : q ∈ Quantile P X α ↔ (f q) ∈ Quantile P (f ∘ X) α := by 
     rw [qset_def, qset_def, prob_f_le_strictmono hm, prob_f_ge_strictmono hm]
 
-#check Set.image_eq_image
-
-example { X Y : Set ℚ} (h : ∀x, x ∈ X ↔ x ∈ Y) : X = Y := by exact Set.ext h 
-
-example { X Y : Set ℚ} (h : ∀x, x ∈ X ↔ f x ∈ Y) : f '' X = Y := by sorry -- FALSE, cannot prove the result below directly
-
-theorem quantile_f_strictmono_set (hm : StrictMono f) : f '' Quantile P X α = Quantile P (f ∘ X) α := by 
-      ext q 
-      rw [Set.image]
-      sorry --see comment below
-
-
--- the reverse implication does not hold
 theorem quantilelower_f_monotone (hm : Monotone f) : q ∈ QuantileLower P X α → (f q) ∈ QuantileLower P (f ∘ X) α := by
     intro h; grw [qsetlower_def, prob_f_ge_monotone hm] at h; exact h
 
 theorem quantilelower_f_strictmono (hm : StrictMono f) : q ∈ QuantileLower P X α ↔ (f q) ∈ QuantileLower P (f ∘ X) α := by 
     rw [qsetlower_def, qsetlower_def, prob_f_ge_strictmono hm]
+
+-- set transformations
+theorem quantile_f_monotone_set (hm : Monotone f) : f '' Quantile P X α ⊆  Quantile P (f ∘ X) α := by
+    intro q ⟨x, hx⟩ 
+    rw [←hx.2] 
+    exact quantile_f_monotone hm hx.1 
+
+theorem quantilelower_f_monotone_set (hm : Monotone f) : f '' QuantileLower P X α ⊆  QuantileLower P (f ∘ X) α := by
+    intro q ⟨x, hx⟩ 
+    rw [←hx.2] 
+    exact quantilelower_f_monotone hm hx.1 
+
+-- this property only holds for a discrete random variable 
+theorem quantile_f_cofinal (hm : Monotone f) : IsCofinalFor (Quantile P (f∘X) α) (f '' Quantile P X α) := by 
+    unfold IsCofinalFor
+    intro a ha 
+    use a 
+    rewrite [qset_def] at ha 
+    constructor
+    swap; exact Rat.le_refl
+    refine (Set.mem_image f (Quantile P X α) a).mpr ?_
+    sorry 
+
+-- this property only holds for a discrete random variable 
+theorem quantile_f_coinitial (hm : Monotone f) : IsCoinitialFor (Quantile P (f∘X) α) (f '' Quantile P X α) := by 
+    sorry 
 
 end Transformations
 
