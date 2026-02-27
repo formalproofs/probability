@@ -239,8 +239,9 @@ def FinRV.max [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β)
 
 variable {X : FinRV n ℚ}
 
-theorem rv_omega_le_max (P : Findist n) : ∀ω, X ω ≤ (FinRV.max P X) :=
-    by intro ω
+
+theorem rv_omega_le_max (P : Findist n) : ∀ω, X ω ≤ (FinRV.max P X) := by 
+       intro ω
        have h : X ω ∈ (Finset.image X Finset.univ) := Finset.mem_image_of_mem X (Finset.mem_univ ω)
        simpa using Finset.le_max' (Finset.image X Finset.univ) (X ω) h
 

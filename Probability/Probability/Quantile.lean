@@ -110,12 +110,12 @@ theorem quantilelower_f_strictmono (hm : StrictMono f) : q ∈ QuantileLower P X
     rw [qsetlower_def, qsetlower_def, prob_f_ge_strictmono hm]
 
 -- set transformations
-theorem quantile_f_monotone_set (hm : Monotone f) : f '' Quantile P X α ⊆  Quantile P (f ∘ X) α := by
+theorem quantile_f_monotone_set (hm : Monotone f) : f '' Quantile P X α ⊆  Quantile P (f∘X) α := by
     intro q ⟨x, hx⟩ 
     rw [←hx.2] 
     exact quantile_f_monotone hm hx.1 
 
-theorem quantilelower_f_monotone_set (hm : Monotone f) : f '' QuantileLower P X α ⊆  QuantileLower P (f ∘ X) α := by
+theorem quantilelower_f_monotone_set (hm : Monotone f) : f '' QuantileLower P X α ⊆  QuantileLower P (f∘X) α := by
     intro q ⟨x, hx⟩ 
     rw [←hx.2] 
     exact quantilelower_f_monotone hm hx.1 
@@ -136,7 +136,6 @@ theorem quantile_f_coinitial (hm : Monotone f) : IsCoinitialFor (Quantile P (f�
     sorry 
 
 end Transformations
-
 
 variable {c : ℚ}
 
