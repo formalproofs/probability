@@ -4,33 +4,6 @@ import Mathlib.Data.Set.Operations
 import Mathlib.Data.Fin.VecNotation
 
 
-section General 
-open Matrix
-
-variable {n : ℕ} 
---variable {α : Type} [Mul α] [HMul α α α] [Ring α] [MulZeroClass α]
-
-
-variable {p x : Fin n.succ → ℚ} 
-
-theorem dotProduct_head_tail : p ⬝ᵥ x = (vecHead p) * (vecHead x) + (vecTail p) ⬝ᵥ (vecTail x) := by 
-   rw [← cons_dotProduct, cons_head_tail]
-
-variable {p x : Fin n → ℚ}
-
-theorem nneg_dotProd_pos_ex_pos (h1 : ∀ ω, p ω ≥ 0) (h2 : ∀ ω, x ω ≥ 0) (h : p ⬝ᵥ x > 0) : ∃ ω, x ω > 0 := by 
-  induction n with 
-  | zero => simp_all 
-  | succ n ih =>
-    by_cases hn : x ⟨0, Nat.zero_lt_succ n⟩ > 0 
-    · exact ⟨0, hn⟩
-    · push_neg at hn 
-      have hvh0 : 0 = vecHead x := le_antisymm (h2 0) hn
-      rewrite [dotProduct_head_tail, ←hvh0] at h 
-      obtain ⟨ω, hω⟩ := ih (Fin.tail h1) (Fin.tail h2) (by simpa [vecHead, vecTail] using h) 
-      use ω.succ 
-
-end General
 
 
 namespace Statistic 
@@ -117,12 +90,6 @@ theorem quantile_le_monotone : X ≤ Y → IsCofinalFor (QuantileLower P X α) (
 section Bounds 
 
 variable {b : ℚ}
-
-theorem prob_atomic_omega (h : ℙ[X =ᵣ b // P] > 0) : ∃ω, X ω = b := by 
-    obtain ⟨ω, hω⟩ : ∃ω, (𝕀 ∘ (X=ᵣb)) ω > 0 := nneg_dotProd_pos_ex_pos (P.nneg) (ind_nneg) h 
-    use ω
-    by_contra!
-    simp_all [𝕀, indicator]
 
 
 end Bounds 
