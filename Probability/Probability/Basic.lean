@@ -14,6 +14,7 @@ import Mathlib.Data.Fin.Tuple.Sort -- for Equiv.Perm and permutation operations
   - LOTUS: The law of the unconscious statistician 
   - The law of total expectations
   - The law of total probabilities
+  - Relationship between X < x and X ≤ x for discrete random variables
 -/
 
 namespace Findist
@@ -242,11 +243,11 @@ theorem prob_le_compl_gt : ℙ[X ≤ᵣ t // P] + ℙ[X >ᵣ t // P] = 1 := by
   exact exp_one
 
 theorem prob_gt_of_le : ℙ[X >ᵣ t // P] = 1 -  ℙ[X ≤ᵣ t // P] := by
-  rw [← prob_le_compl_gt]
+  rw [←prob_le_compl_gt]
   ring
 
 theorem prob_le_of_gt :  ℙ[X ≤ᵣ t // P] = 1 - ℙ[X >ᵣ t // P] := by
-  rw [← prob_le_compl_gt]
+  rw [←prob_le_compl_gt]
   ring
 
 theorem prob_lt_compl_ge : ℙ[X <ᵣ t // P] + ℙ[X ≥ᵣ t // P] = 1 := by
@@ -301,7 +302,7 @@ theorem prob_lt_le_monotone {q : ℚ} : q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X �
             · have h4 : X ω < q := lt_of_le_of_lt h3 h
               simp [FinRV.leq, FinRV.lt, 𝕀, indicator, Function.comp, h3, h4]
             · simp [𝕀, indicator, FinRV.leq, FinRV.lt, Function.comp, h3]
-              by_cases h5 : X ω < q <;> simp [h5] -- <;> applies to both cases
+              by_cases h5 : X ω < q <;> simp [h5] 
        exact mul_le_mul_of_nonneg_left h2 (P.nneg ω)
 
 theorem prob_le_eq_one : ℙ[X ≤ᵣ (FinRV.max P X) // P] = 1 := by rw [rv_le_max_one]; exact prob_one_of_true P
@@ -320,15 +321,12 @@ theorem prob_lt_epsi_eq_le_of_lt (h: t < (FinRV.max P X)) : ∃q > t, ℙ[X <ᵣ
           let ⟨q, hq⟩ := rv_lt_epsi_eq_le_of_lt P X t h
           Exists.intro q ⟨hq.1, ⟨congrArg (probability P) hq.2.1, hq.2.2 ⟩⟩
 
-
 /-- similar to `prob_lt_epsi_eq_le_of_lt` but no precondition -/
 theorem prob_lt_epsi_eq_le : ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] :=
       let ⟨q, hq⟩ := rv_lt_epsi_eq_le X t P
       Exists.intro q ⟨hq.1, congrArg (probability P) hq.2⟩
 
-
 end Rounding 
-
 
 section Transformations
 

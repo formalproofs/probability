@@ -3,7 +3,6 @@ import Probability.Probability.Quantile
 import Mathlib.Data.EReal.Basic
 import Mathlib.Data.Set.Operations
 
-
 namespace Risk
 
 open Findist FinRV Statistic
