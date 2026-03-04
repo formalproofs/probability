@@ -21,11 +21,7 @@ import Mathlib.Data.Fin.Tuple.Sort -- for Equiv.Perm and permutation operations
 section General 
 open Matrix
 
-variable {n : ℕ} 
---variable {α : Type} [Mul α] [HMul α α α] [Ring α] [MulZeroClass α]
-
-
-variable {p x : Fin n.succ → ℚ} 
+variable {n : ℕ} {p x : Fin n.succ → ℚ} 
 
 theorem dotProduct_head_tail : p ⬝ᵥ x = (vecHead p) * (vecHead x) + (vecTail p) ⬝ᵥ (vecTail x) := by 
    rw [← cons_dotProduct, cons_head_tail]
@@ -213,13 +209,24 @@ theorem rv_f_lt_strictanti (hm : StrictAnti f) : (X <ᵣ x) = (f ∘ X >ᵣ f x)
 theorem rv_f_ge_monotone (hm : Monotone f) : (X ≥ᵣ x) ≤ (f ∘ X ≥ᵣ f x) := 
     by intro ω; apply bool_ineq; simpa using fun a ↦ hm a
 
+theorem rv_f_ge_antitone (hm : Antitone  f) : (X ≥ᵣ x) ≤ (f ∘ X ≤ᵣ f x) := 
+    by intro ω; apply bool_ineq; simpa using fun a ↦ hm a
+
+
 theorem rv_f_ge_strictmono (hm : StrictMono f) : (X ≥ᵣ x) = (f ∘ X ≥ᵣ f x) := 
     by ext ω; apply bool_eq; simpa using fun a ↦ hm.monotone a; simpa using hm.le_iff_le.mp
+
+theorem rv_f_ge_strictanti (hm : StrictAnti f) : (X ≥ᵣ x) = (f ∘ X ≤ᵣ f x) := 
+    by ext ω; apply bool_eq; simpa using fun a ↦ hm.antitone a; simpa using hm.le_iff_le.mp
 
 --- GT
 
 theorem rv_f_gt_strictmono (hm : StrictMono f) : (X >ᵣ x) = (f ∘ X >ᵣ f x) := 
     by ext ω; apply bool_eq; simpa using fun a => hm a; simpa using hm.lt_iff_lt.mp 
+
+
+theorem rv_f_gt_strictanti (hm : StrictAnti f) : (X >ᵣ x) = (f ∘ X <ᵣ f x) := 
+    by ext ω; apply bool_eq; simpa using fun a => hm a; simpa using hm.lt_iff_gt.mp
 
 
 end Monotone
@@ -239,6 +246,22 @@ theorem rv_ge_cashinvar : (X ≥ᵣ x) = (X + c•1 ≥ᵣ x + c) := by ext ω; 
 theorem rv_gt_cashinvar : (X >ᵣ x) = (X + c•1 >ᵣ x + c) := by ext ω; simp
 
 end CashInvariance
+
+section Negation 
+
+
+variable {x : ℚ}
+
+theorem rv_le_neg_ge : (X ≤ᵣ x) = (-X ≥ᵣ -x) := by ext ω; simp
+
+theorem rv_ge_neg_le : (X ≥ᵣ x) = (-X ≤ᵣ -x) := by ext ω; simp
+
+theorem rv_lt_neg_gt : (X <ᵣ x) = (-X >ᵣ -x) := by ext ω; simp
+
+theorem rv_gt_neg_lt : (X >ᵣ x) = (-X <ᵣ -x) := by ext ω; simp
+
+end Negation 
+
 
 end Transformations
 
@@ -349,7 +372,6 @@ theorem prob_ge_eq_one : ℙ[X ≥ᵣ (FinRV.min P X) // P] = 1 := by rw [rv_ge_
 theorem prob_lt_min_eq_zero : ℙ[X <ᵣ (FinRV.min P X) // P] = 0 := by
     rw [prob_lt_of_ge, prob_ge_eq_one]; exact sub_self 1
 
-
 section Rounding ---results for discrete probability distributions
 
 variable (P : Findist n) (X : FinRV n ℚ) (t : ℚ)
@@ -400,7 +422,6 @@ theorem prob_f_ge_strictmono (hm : StrictMono f) : ℙ[X ≥ᵣ x // P] = ℙ[f 
 theorem prob_f_gt_strictmono (hm : StrictMono f) : ℙ[X >ᵣ x // P] = ℙ[f ∘ X >ᵣ f x // P] := 
   congrArg (probability P) (rv_f_gt_strictmono hm) 
 
-
 end Monotone 
 
 section CashInvariance 
@@ -417,7 +438,22 @@ theorem prob_gt_cashinvar : ℙ[X >ᵣ x // P] = ℙ[X + c•1 >ᵣ x + c // P] 
 
 end CashInvariance
 
+section Negation 
+
+variable {x : ℚ}
+
+theorem prob_le_neg_ge :  ℙ[X ≤ᵣ x // P] = ℙ[-X ≥ᵣ -x // P] := by rw [rv_le_neg_ge]
+
+theorem prob_ge_neg_le :  ℙ[X ≥ᵣ x // P] = ℙ[-X ≤ᵣ -x // P] := by rw [rv_ge_neg_le]
+
+theorem prob_lt_neg_gt : ℙ[X <ᵣ x //P] = ℙ[-X >ᵣ -x // P] := by rw [rv_lt_neg_gt]
+
+theorem prob_gt_neg_lt : ℙ[X >ᵣ x //P] = ℙ[-X <ᵣ -x // P] := by rw [rv_gt_neg_lt]
+
+end Negation 
+
 end Transformations
+
 end Probability 
 
 ------------------------------ CDF ---------------------------

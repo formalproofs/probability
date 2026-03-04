@@ -76,7 +76,6 @@ theorem qsetlower_of_cond_lt : ℙ[X ≤ᵣ q // P] ≥ α ∧ ℙ[ X <ᵣ q // 
        have h2 : ℙ[X ≥ᵣ q // P] ≥ 1 - α := by rw [prob_ge_of_lt]; linarith
        exact qsetlower_of_cond ⟨h1.1, h2⟩
 
-
 theorem quantile_implies_quantilelower : IsQuantile P X α v → IsQuantileLower P X α v :=
     by simp[IsQuantile, IsQuantileLower]
 
@@ -87,9 +86,22 @@ theorem quantile_le_monotone : X ≤ Y → IsCofinalFor (QuantileLower P X α) (
   have hq₁ := le_refl q₁
   exact ⟨q₁, ⟨le_trans hvar₁ (prob_ge_antitone hle hq₁), hq₁⟩⟩
 
-section Bounds 
+section Negation 
 
-variable {b : ℚ}
+theorem isquant_neg : (IsQuantile P X α q) ↔ (IsQuantile P (-X) (1-α) (-q)) := by 
+  rw [IsQuantile, IsQuantile, prob_ge_neg_le,prob_le_neg_ge]
+  have hα : 1-(1-α) = α := by ring 
+  rewrite [hα]
+  constructor <;> exact fun a => a.symm
+  
+theorem quantile_neg : q ∈ Quantile P X α ↔ (-q) ∈ Quantile P (-X) (1-α) := isquant_neg
+
+
+
+
+end Negation 
+
+section Bounds 
 
 
 end Bounds 
