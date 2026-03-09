@@ -123,21 +123,21 @@ theorem prob_atomic_omega {b : ℚ} (h : ℙ[X =ᵣ b // P] > 0) : ∃ω, X ω =
     simp_all [𝕀, indicator]
 
 
-theorem rv_lt_epsi_eq_le_of_lt (h0 : t < (FinRV.max P X)) : ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) ∧ q ∈ (Finset.univ.image X) := by
+theorem rv_lt_epsi_eq_le_of_lt (h0 : t < (FinRV.max P X)) : ∃q > t, (X ≤ᵣ t) = (X <ᵣ q) ∧ q ∈ (Finset.univ.image X) := by
      let 𝓧 := Finset.univ.image X
      let 𝓨 := 𝓧.filter (fun x ↦ x > t)
-     have h : 𝓨.Nonempty := Finset.filter_nonempty_iff.mpr ⟨FinRV.max P X, ⟨rv_max_in_image, h0⟩⟩
-     let y := 𝓨.min' h
-     have hy1 : y ∈ 𝓨 := Finset.min'_mem 𝓨 h
+     have hnonempty : 𝓨.Nonempty := Finset.filter_nonempty_iff.mpr ⟨FinRV.max P X, ⟨rv_max_in_image, h0⟩⟩
+     let y := 𝓨.min' hnonempty
+     have hy1 : y ∈ 𝓨 := Finset.min'_mem 𝓨 hnonempty
      have hy2 : y ∈ 𝓧 ∧ y > t := Finset.mem_filter.mp hy1
      use y
      constructor
-     · by_contra! le
-       exact false_of_le_gt le hy2.2
+     · exact hy2.2
      · constructor
        · ext ω
          rw [FinRV.leq,FinRV.lt,decide_eq_decide]
          constructor
+         · intro h2; grewrite [h2]; exact hy2.2
          · intro h2
            have xωx : X ω ∈ 𝓧 := Finset.mem_image_of_mem X (Finset.mem_univ ω)
            have hxω : X ω ∉ 𝓨 := by
@@ -145,11 +145,9 @@ theorem rv_lt_epsi_eq_le_of_lt (h0 : t < (FinRV.max P X)) : ∃q > t, (X <ᵣ q)
            rw [Finset.mem_filter] at hxω
            push_neg at hxω
            exact hxω xωx
-         · intro h2; grewrite [h2]; exact hy2.2
        · exact Finset.mem_of_mem_filter y hy1
 
-
-theorem rv_lt_epsi_eq_le (P : Findist n) : ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) :=
+theorem rv_lt_epsi_eq_le (P : Findist n) : ∃q > t,  (X ≤ᵣ t) = (X <ᵣ q) :=
        let 𝓧 := Finset.univ.image X
        let 𝓨 := 𝓧.filter (fun x ↦ x > t)
        by cases' lt_or_ge t (FinRV.max P X) with hlt hge
@@ -159,7 +157,7 @@ theorem rv_lt_epsi_eq_le (P : Findist n) : ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) :
             grw [hge] at h
             let q := t + 1
             have b : ∀ω, X ω < q := fun ω => lt_add_of_le_of_pos (h ω) rfl
-            have ab : (X <ᵣ q) = (X ≤ᵣ t) := by ext ω; grind only [FinRV.leq,FinRV.lt]
+            have ab : (X ≤ᵣ t) = (X <ᵣ q) := by ext ω; grind only [FinRV.leq,FinRV.lt]
             exact ⟨q, ⟨lt_add_one t, ab⟩⟩
 
 
@@ -264,7 +262,6 @@ end Negation
 
 
 end Transformations
-
 
 end RandomVariables
 
@@ -375,14 +372,14 @@ section Rounding ---results for discrete probability distributions
 
 variable (P : Findist n) (X : FinRV n ℚ) (t : ℚ)
 
-theorem prob_lt_epsi_eq_le_of_lt (h: t < (FinRV.max P X)) : ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] ∧ q ∈ (Finset.univ.image X) :=
+theorem prob_lt_epsi_eq_le_of_lt (h: t < (FinRV.max P X)) : ∃q > t, ℙ[X ≤ᵣ t // P] = ℙ[X <ᵣ q // P] ∧ q ∈ (Finset.univ.image X) :=
           let ⟨q, hq⟩ := rv_lt_epsi_eq_le_of_lt P X t h
           Exists.intro q ⟨hq.1, ⟨congrArg (probability P) hq.2.1, hq.2.2 ⟩⟩
 
 /-- similar to `prob_lt_epsi_eq_le_of_lt` but no precondition -/
 theorem prob_lt_epsi_eq_le : ∃q > t,  ℙ[X ≤ᵣ t // P] = ℙ[X <ᵣ q // P] :=
       let ⟨q, hq⟩ := rv_lt_epsi_eq_le X t P
-      Exists.intro q ⟨hq.1, congrArg (probability P) hq.2.symm⟩
+      Exists.intro q ⟨hq.1, congrArg (probability P) hq.2⟩
 
 end Rounding 
 

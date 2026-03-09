@@ -66,7 +66,7 @@ theorem var1_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR1 P X α) // P] > α.val
       apply Finset.mem_filter.mpr
       constructor
       · exact hqin
-      · rw [hqp]; exact hg
+      · rw [←hqp]; exact hg
     have : q ≤ t := by subst h; exact Finset.le_max' 𝓢 q hqs
     linarith
 
