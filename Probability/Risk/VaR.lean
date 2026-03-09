@@ -60,7 +60,7 @@ theorem var1_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR1 P X α) // P] > α.val
            rw [prob_le_eq_one] at hh
            have := α.2.2
            linarith
-    obtain ⟨q, hq⟩ := prob_lt_epsi_eq_le_of_lt P X t tlt
+    obtain ⟨q, hq⟩ := prob_le_step_lt_max P X t tlt
     rcases hq with ⟨hqgt, hqp, hqin⟩
     have hqs : q ∈ 𝓢 := by
       apply Finset.mem_filter.mpr
@@ -90,7 +90,7 @@ theorem var2_prob_cond : IsVaR2 P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ 
             simp_all [IsVaR2,IsGreatest,QuantileLower,IsQuantileLower,prob_ge_of_lt]
          linarith
        · by_contra! hc
-         obtain ⟨q,hq⟩ := prob_lt_epsi_eq_le P X v
+         obtain ⟨q,hq⟩ := prob_le_step_lt P X v
          have h3 : q ∈ QuantileLower P X α.val := by
             rw [hq.2,prob_lt_of_ge] at hc
             suffices ℙ[X≥ᵣq//P] ≥ 1 - α.val from this

@@ -123,7 +123,7 @@ theorem prob_atomic_omega {b : ℚ} (h : ℙ[X =ᵣ b // P] > 0) : ∃ω, X ω =
     simp_all [𝕀, indicator]
 
 
-theorem rv_lt_epsi_eq_le_of_lt (h0 : t < (FinRV.max P X)) : ∃q > t, (X ≤ᵣ t) = (X <ᵣ q) ∧ q ∈ (Finset.univ.image X) := by
+theorem rv_le_step_lt_max (h0 : t < (FinRV.max P X)) : ∃q > t, (X ≤ᵣ t) = (X <ᵣ q) ∧ q ∈ (Finset.univ.image X) := by
      let 𝓧 := Finset.univ.image X
      let 𝓨 := 𝓧.filter (fun x ↦ x > t)
      have hnonempty : 𝓨.Nonempty := Finset.filter_nonempty_iff.mpr ⟨FinRV.max P X, ⟨rv_max_in_image, h0⟩⟩
@@ -147,11 +147,11 @@ theorem rv_lt_epsi_eq_le_of_lt (h0 : t < (FinRV.max P X)) : ∃q > t, (X ≤ᵣ 
            exact hxω xωx
        · exact Finset.mem_of_mem_filter y hy1
 
-theorem rv_lt_epsi_eq_le (P : Findist n) : ∃q > t,  (X ≤ᵣ t) = (X <ᵣ q) :=
+theorem rv_le_step_lt (P : Findist n) : ∃q > t,  (X ≤ᵣ t) = (X <ᵣ q) :=
        let 𝓧 := Finset.univ.image X
        let 𝓨 := 𝓧.filter (fun x ↦ x > t)
        by cases' lt_or_ge t (FinRV.max P X) with hlt hge
-          · obtain ⟨q, h⟩ := rv_lt_epsi_eq_le_of_lt P X t hlt
+          · obtain ⟨q, h⟩ := rv_le_step_lt_max P X t hlt
             exact ⟨q, ⟨h.1, h.2.1⟩⟩
           · have h := rv_omega_le_max P (X:=X)
             grw [hge] at h
@@ -161,7 +161,7 @@ theorem rv_lt_epsi_eq_le (P : Findist n) : ∃q > t,  (X ≤ᵣ t) = (X <ᵣ q) 
             exact ⟨q, ⟨lt_add_one t, ab⟩⟩
 
 
-theorem rv_gt_epsi_eq_ge_of_gt (h0 : t > (FinRV.min P X)) : ∃q < t, (X >ᵣ q) = (X ≥ᵣ t) ∧ q ∈ (Finset.univ.image X) := by
+theorem rv_ge_step_lt_min (h0 : t > (FinRV.min P X)) : ∃q < t, (X ≥ᵣ t) = (X >ᵣ q) ∧ q ∈ (Finset.univ.image X) := by
     sorry 
 
 end Atomic
@@ -372,13 +372,13 @@ section Rounding ---results for discrete probability distributions
 
 variable (P : Findist n) (X : FinRV n ℚ) (t : ℚ)
 
-theorem prob_lt_epsi_eq_le_of_lt (h: t < (FinRV.max P X)) : ∃q > t, ℙ[X ≤ᵣ t // P] = ℙ[X <ᵣ q // P] ∧ q ∈ (Finset.univ.image X) :=
-          let ⟨q, hq⟩ := rv_lt_epsi_eq_le_of_lt P X t h
+theorem prob_le_step_lt_max (h: t < (FinRV.max P X)) : ∃q > t, ℙ[X ≤ᵣ t // P] = ℙ[X <ᵣ q // P] ∧ q ∈ (Finset.univ.image X) :=
+          let ⟨q, hq⟩ := rv_le_step_lt_max P X t h
           Exists.intro q ⟨hq.1, ⟨congrArg (probability P) hq.2.1, hq.2.2 ⟩⟩
 
 /-- similar to `prob_lt_epsi_eq_le_of_lt` but no precondition -/
-theorem prob_lt_epsi_eq_le : ∃q > t,  ℙ[X ≤ᵣ t // P] = ℙ[X <ᵣ q // P] :=
-      let ⟨q, hq⟩ := rv_lt_epsi_eq_le X t P
+theorem prob_le_step_lt : ∃q > t,  ℙ[X ≤ᵣ t // P] = ℙ[X <ᵣ q // P] :=
+      let ⟨q, hq⟩ := rv_le_step_lt X t P
       Exists.intro q ⟨hq.1, congrArg (probability P) hq.2⟩
 
 end Rounding 
