@@ -116,7 +116,7 @@ section Atomic
 variable (P : Findist n) (X : FinRV n ℚ) (t : ℚ)
 
 
-theorem prob_atomic_omega (h : ℙ[X =ᵣ b // P] > 0) : ∃ω, X ω = b := by 
+theorem prob_atomic_omega {b : ℚ} (h : ℙ[X =ᵣ b // P] > 0) : ∃ω, X ω = b := by 
     obtain ⟨ω, hω⟩ : ∃ω, (𝕀 ∘ (X=ᵣb)) ω > 0 := nneg_dotProd_pos_ex_pos (P.nneg) (ind_nneg) h 
     use ω
     by_contra!
@@ -217,7 +217,7 @@ theorem rv_f_ge_strictmono (hm : StrictMono f) : (X ≥ᵣ x) = (f ∘ X ≥ᵣ 
     by ext ω; apply bool_eq; simpa using fun a ↦ hm.monotone a; simpa using hm.le_iff_le.mp
 
 theorem rv_f_ge_strictanti (hm : StrictAnti f) : (X ≥ᵣ x) = (f ∘ X ≤ᵣ f x) := 
-    by ext ω; apply bool_eq; simpa using fun a ↦ hm.antitone a; simpa using hm.le_iff_le.mp
+    by ext ω; apply bool_eq; simpa using fun a ↦ hm.antitone a; simpa using hm.le_iff_ge.mp
 
 --- GT
 
@@ -352,18 +352,17 @@ theorem prob_gt_antitone : X ≤ Y → t₁ ≤ t₂ → ℙ[Y >ᵣ t₁ // P] �
   have := prob_le_monotone (P := P) hxy ht 
   linarith 
 
-theorem prob_lt_le_monotone {q : ℚ} : q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t // P] :=
-    by intro h
-       unfold probability dotProduct
-       apply Finset.sum_le_sum
-       intro ω hω
-       have h2 : (𝕀 ∘ (X ≤ᵣ t)) ω ≤ (𝕀 ∘ (X <ᵣ q)) ω :=
-         by by_cases h3 : X ω ≤ t
-            · have h4 : X ω < q := lt_of_le_of_lt h3 h
-              simp [FinRV.leq, FinRV.lt, 𝕀, indicator, Function.comp, h3, h4]
-            · simp [𝕀, indicator, FinRV.leq, FinRV.lt, Function.comp, h3]
-              by_cases h5 : X ω < q <;> simp [h5] 
-       exact mul_le_mul_of_nonneg_left h2 (P.nneg ω)
+theorem prob_lt_le_monotone {q : ℚ} (h : q > t) : ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t // P] := by 
+     unfold probability 
+     apply Finset.sum_le_sum
+     intro ω hω
+     have h2 : (𝕀 ∘ (X ≤ᵣ t)) ω ≤ (𝕀 ∘ (X <ᵣ q)) ω :=
+       by by_cases h3 : X ω ≤ t
+          · have h4 : X ω < q := lt_of_le_of_lt h3 h
+            simp [FinRV.leq, FinRV.lt, 𝕀, indicator, Function.comp, h3, h4]
+          · simp [𝕀, indicator, FinRV.leq, FinRV.lt, Function.comp, h3]
+            by_cases h5 : X ω < q <;> simp [h5] 
+     exact mul_le_mul_of_nonneg_left h2 (P.nneg ω)
 
 theorem prob_le_eq_one : ℙ[X ≤ᵣ (FinRV.max P X) // P] = 1 := by rw [rv_le_max_one]; exact prob_one_of_true P
 
@@ -381,9 +380,9 @@ theorem prob_lt_epsi_eq_le_of_lt (h: t < (FinRV.max P X)) : ∃q > t, ℙ[X <ᵣ
           Exists.intro q ⟨hq.1, ⟨congrArg (probability P) hq.2.1, hq.2.2 ⟩⟩
 
 /-- similar to `prob_lt_epsi_eq_le_of_lt` but no precondition -/
-theorem prob_lt_epsi_eq_le : ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] :=
+theorem prob_lt_epsi_eq_le : ∃q > t,  ℙ[X ≤ᵣ t // P] = ℙ[X <ᵣ q // P] :=
       let ⟨q, hq⟩ := rv_lt_epsi_eq_le X t P
-      Exists.intro q ⟨hq.1, congrArg (probability P) hq.2⟩
+      Exists.intro q ⟨hq.1, congrArg (probability P) hq.2.symm⟩
 
 end Rounding 
 

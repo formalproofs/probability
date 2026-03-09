@@ -8,7 +8,6 @@ namespace Risk
 open Findist FinRV Statistic
 
 variable {n : ℕ}
-
 variable {P : Findist n} {X Y : FinRV n ℚ} {t t₁ t₂ : ℚ}
 
 def IsRiskLevel (α : ℚ) : Prop := 0 ≤ α ∧ α < 1
@@ -83,17 +82,17 @@ def IsVaR2 : Prop := IsGreatest (QuantileLower P X α.val) v
 
 variable {n : ℕ} {P : Findist n} {X Y : FinRV n ℚ} {α : RiskLevel} {q v q₁ q₂ : ℚ}
 
-
 theorem var2_prob_cond : IsVaR2 P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ α.val < ℙ[X ≤ᵣ v // P]) :=
   by constructor
      · intro h
        constructor
-       · have h1 : 1 - ℙ[X<ᵣv//P] ≥ 1 - α.val := by simp_all [IsVaR2,IsGreatest,QuantileLower,IsQuantileLower,prob_ge_of_lt]
+       · have h1 : 1 - ℙ[X<ᵣv//P] ≥ 1 - α.val := by 
+            simp_all [IsVaR2,IsGreatest,QuantileLower,IsQuantileLower,prob_ge_of_lt]
          linarith
        · by_contra! hc
          obtain ⟨q,hq⟩ := prob_lt_epsi_eq_le P X v
          have h3 : q ∈ QuantileLower P X α.val := by
-            rw [←hq.2,prob_lt_of_ge] at hc
+            rw [hq.2,prob_lt_of_ge] at hc
             suffices ℙ[X≥ᵣq//P] ≥ 1 - α.val from this
             linarith
          exact false_of_le_gt (h.2 h3) hq.1
@@ -168,9 +167,44 @@ theorem var_eq_var2 : IsVaR P X α v ↔ IsVaR2 P X α v := by
 theorem var_prob_cond : IsVaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ α.val < ℙ[ X ≤ᵣ v // P]) :=
   by rw[var_eq_var2]; exact var2_prob_cond
 
------------------------------ Fast VaR computation -------------------------------------------------
+-------------------- VaR Properties -----------------------------------------------------------------------------
 
+
+section VaR_properties
+
+variable {P : Findist n} {X Y : FinRV n ℚ} {q q₁ v₁ v₂ c : ℚ} {α : RiskLevel}
+
+theorem var2_monotone : X ≤ Y → IsVaR2 P X α v₁ → IsVaR2 P Y α v₂ → v₁ ≤ v₂ :=
+  fun hle hv1 hv2 => upperBounds_mono_of_isCofinalFor (quantile_le_monotone hle) hv2.2 hv1.1
+
+
+theorem const_monotone_univ : StrictMono (fun x ↦ x + c)  := add_left_strictMono
+
+theorem VaR2_translation_invariant : IsVaR2 P X α v → IsVaR2 P (X+c•1) α (v+c) := by
+    intro h
+    rw [IsVaR2,quantilelower_cash_image]
+    exact MonotoneOn.map_isGreatest (Monotone.monotoneOn add_left_mono
+                                    (QuantileLower P X α.val)) h
+
+theorem VaR_translation_invariant : VaR[X + c•1 // P, α] = VaR[X + c•1 // P, α] + c := sorry
+
+theorem VaR_positive_homog (hc : c > 0) : FinVaR1 P (fun ω => c * X ω) α = c * FinVaR1 P X α := sorry
+
+end VaR_properties
+
+end Risk
+
+
+
+-------- Other results, to be cleaned up later --------------------------------------
+
+----------------------------- Fast VaR computation -------------------------------------------------
+/-
 section FasterVaR
+
+variable {n : ℕ}
+variable {P : Findist n} {X Y : FinRV n ℚ} {t t₁ t₂ : ℚ}
+
 
 theorem tail_monotone (X : Fin (n.succ) → ℚ) (h : Monotone X) : Monotone (Fin.tail X) :=
     by unfold Monotone at h ⊢
@@ -295,29 +329,4 @@ def FinVaR (α : RiskLevel) (P : Findist n) (X : FinRV n ℚ) : ℚ :=
 
 end FasterVaR
 
--------------------- VaR Properties -----------------------------------------------------------------------------
-
-
-section VaR_properties
-
-variable {P : Findist n} {X Y : FinRV n ℚ} {q q₁ v₁ v₂ c : ℚ} {α : RiskLevel}
-
-theorem var2_monotone : X ≤ Y → IsVaR2 P X α v₁ → IsVaR2 P Y α v₂ → v₁ ≤ v₂ :=
-  fun hle hv1 hv2 => upperBounds_mono_of_isCofinalFor (quantile_le_monotone hle) hv2.2 hv1.1
-
-
-theorem const_monotone_univ : StrictMono (fun x ↦ x + c)  := add_left_strictMono
-
-theorem VaR2_translation_invariant : IsVaR2 P X α v → IsVaR2 P (X+c•1) α (v+c) := by
-    intro h
-    rw [IsVaR2,quantilelower_cash_image]
-    exact MonotoneOn.map_isGreatest (Monotone.monotoneOn add_left_mono
-                                    (QuantileLower P X α.val)) h
-
-theorem VaR_translation_invariant : VaR[X + c•1 // P, α] = VaR[X + c•1 // P, α] + c := sorry
-
-theorem VaR_positive_homog (hc : c > 0) : FinVaR1 P (fun ω => c * X ω) α = c * FinVaR1 P X α := sorry
-
-end VaR_properties
-
-end Risk
+-/
