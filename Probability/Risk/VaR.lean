@@ -195,7 +195,6 @@ end VaR_properties
 end Risk
 
 
-
 -------- Other results, to be cleaned up later --------------------------------------
 
 ----------------------------- Fast VaR computation -------------------------------------------------

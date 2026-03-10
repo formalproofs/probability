@@ -128,9 +128,9 @@ theorem rv_le_step_lt_max (h0 : t < (FinRV.max P X)) : ∃q > t, (X ≤ᵣ t) = 
      let 𝓨 := 𝓧.filter (fun x ↦ x > t)
      have hnonempty : 𝓨.Nonempty := Finset.filter_nonempty_iff.mpr ⟨FinRV.max P X, ⟨rv_max_in_image, h0⟩⟩
      let y := 𝓨.min' hnonempty
-     have hy1 : y ∈ 𝓨 := Finset.min'_mem 𝓨 hnonempty
-     have hy2 : y ∈ 𝓧 ∧ y > t := Finset.mem_filter.mp hy1
+     have hy2 : y ∈ 𝓧 ∧ y > t := Finset.mem_filter.mp (Finset.min'_mem 𝓨 hnonempty)
      use y
+     rw [hy2.2]
      constructor
      · exact hy2.2
      · constructor
@@ -145,11 +145,9 @@ theorem rv_le_step_lt_max (h0 : t < (FinRV.max P X)) : ∃q > t, (X ≤ᵣ t) = 
            rw [Finset.mem_filter] at hxω
            push_neg at hxω
            exact hxω xωx
-       · exact Finset.mem_of_mem_filter y hy1
+       · exact Finset.mem_of_mem_filter y (Finset.min'_mem 𝓨 hnonempty)
 
 theorem rv_le_step_lt (P : Findist n) : ∃q > t,  (X ≤ᵣ t) = (X <ᵣ q) :=
-       let 𝓧 := Finset.univ.image X
-       let 𝓨 := 𝓧.filter (fun x ↦ x > t)
        by cases' lt_or_ge t (FinRV.max P X) with hlt hge
           · obtain ⟨q, h⟩ := rv_le_step_lt_max P X t hlt
             exact ⟨q, ⟨h.1, h.2.1⟩⟩
