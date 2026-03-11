@@ -122,30 +122,29 @@ theorem prob_atomic_omega {b : ℚ} (h : ℙ[X =ᵣ b // P] > 0) : ∃ω, X ω =
     by_contra!
     simp_all [𝕀, indicator]
 
+example {a b c : ℚ} (h1 : a ≤ b) (h2 : b < c) : a < c := by apply?
 
 theorem rv_le_step_lt_max (h0 : t < (FinRV.max P X)) : ∃q > t, (X ≤ᵣ t) = (X <ᵣ q) ∧ q ∈ (Finset.univ.image X) := by
      let 𝓧 := Finset.univ.image X
      let 𝓨 := 𝓧.filter (fun x ↦ x > t)
      have hnonempty : 𝓨.Nonempty := Finset.filter_nonempty_iff.mpr ⟨FinRV.max P X, ⟨rv_max_in_image, h0⟩⟩
-     let y := 𝓨.min' hnonempty
-     have hy2 : y ∈ 𝓧 ∧ y > t := Finset.mem_filter.mp (Finset.min'_mem 𝓨 hnonempty)
-     use y
-     rw [hy2.2]
+     let q := 𝓨.min' hnonempty
+     have hq_Y : q > t := (Finset.mem_filter.mp (Finset.min'_mem 𝓨 hnonempty)).right 
+     use q
      constructor
-     · exact hy2.2
-     · constructor
+     · exact hq_Y
+     · constructor; swap
+       · exact Finset.mem_of_mem_filter q (Finset.min'_mem 𝓨 hnonempty)
        · ext ω
          rw [FinRV.leq,FinRV.lt,decide_eq_decide]
          constructor
-         · intro h2; grewrite [h2]; exact hy2.2
+         · exact fun h2 => lt_of_le_of_lt h2 hq_Y
          · intro h2
-           have xωx : X ω ∈ 𝓧 := Finset.mem_image_of_mem X (Finset.mem_univ ω)
            have hxω : X ω ∉ 𝓨 := by
               by_contra! inY; exact false_of_le_gt (Finset.min'_le 𝓨 (X ω) inY) h2
            rw [Finset.mem_filter] at hxω
            push_neg at hxω
-           exact hxω xωx
-       · exact Finset.mem_of_mem_filter y (Finset.min'_mem 𝓨 hnonempty)
+           exact hxω (Finset.mem_image_of_mem X (Finset.mem_univ ω))
 
 theorem rv_le_step_lt (P : Findist n) : ∃q > t,  (X ≤ᵣ t) = (X <ᵣ q) :=
        by cases' lt_or_ge t (FinRV.max P X) with hlt hge
@@ -155,7 +154,7 @@ theorem rv_le_step_lt (P : Findist n) : ∃q > t,  (X ≤ᵣ t) = (X <ᵣ q) :=
             grw [hge] at h
             let q := t + 1
             have b : ∀ω, X ω < q := fun ω => lt_add_of_le_of_pos (h ω) rfl
-            have ab : (X ≤ᵣ t) = (X <ᵣ q) := by ext ω; grind only [FinRV.leq,FinRV.lt]
+            have ab : (X ≤ᵣ t) = (X <ᵣ q) := by ext ω; simp_all [FinRV.leq, FinRV.lt]
             exact ⟨q, ⟨lt_add_one t, ab⟩⟩
 
 
