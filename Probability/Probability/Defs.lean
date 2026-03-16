@@ -408,8 +408,7 @@ variable {k : ℕ} {g : Fin k → ℚ} {L : FinRV n (Fin k)}
 
 theorem exp_decompose : 𝔼[X // P] = ∑ i, 𝔼[X * (L =ᵢ i) // P] := 
   by nth_rewrite 1 [rv_decompose X L]
-     rewrite [exp_additive]
-     simp 
+     rw [exp_additive]
 
 /-- Expectation of a conditional constant. Only when probability is positive.  -/
 theorem exp_cond_const : ∀ i, ℙ[L =ᵣ i //   P] ≠ 0 → 𝔼[g ∘ L | L =ᵣ i // P] = g i := 

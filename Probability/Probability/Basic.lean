@@ -479,19 +479,18 @@ section Expectation
 
 variable {n : ℕ} {P : Findist n}
 variable {k : ℕ} {X : FinRV n ℚ} {B : FinRV n Bool} {L : FinRV n (Fin k)}
-variable  (g : Fin k → ℚ)
+variable (g : Fin k → ℚ)
 
 /-- LOTUS: The law of the unconscious statistician (or similar) -/
 theorem LOTUS : 𝔼[g ∘ L // P ] = ∑ i, ℙ[L =ᵣ i // P] * (g i) :=
   by rewrite [exp_decompose (X := g ∘ L) (L := L) ]
      apply Fintype.sum_congr
      intro i
-     rewrite [←indi_eq_indr]
-     rewrite [←exp_cond_eq_def (X := g ∘ L) ]
+     rewrite [←indi_eq_indr, ←exp_cond_eq_def (X := g ∘ L) ]
      by_cases! h : ℙ[L =ᵣ i // P] = 0 
      · rw [h];  simp 
      · rw [exp_cond_const i h ]
-       ring 
+       ring
 
 theorem law_total_exp : 𝔼[𝔼[X |ᵣ L // P] // P] = 𝔼[X // P] :=
   let g i := 𝔼[X | L =ᵣ i // P]
@@ -501,6 +500,12 @@ theorem law_total_exp : 𝔼[𝔼[X |ᵣ L // P] // P] = 𝔼[X // P] :=
     _ =  ∑ i : Fin k, 𝔼[X * (𝕀 ∘ (L =ᵣ i)) // P] := by apply Fintype.sum_congr; exact fun a  ↦ exp_cond_eq_def
     _ =  ∑ i : Fin k, 𝔼[X * (L =ᵢ i) // P] := by apply Fintype.sum_congr; intro i; apply exp_congr; rw[indi_eq_indr] 
     _ = 𝔼[X // P]  := by rw [←exp_decompose]
+
+
+/-- Shows that our definition of expectation is correct -/ 
+theorem expect_def_correct : 𝔼[ X // P] = ∑ y ∈ (Finset.univ.image X), (ℙ[ X =ᵣ y // P] * y) := by 
+    -- TODO: Can we use FinEnum and Quotient to reduce it to LOTUS
+    sorry 
 
 end Expectation 
 
