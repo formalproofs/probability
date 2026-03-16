@@ -39,7 +39,6 @@ abbrev Delta : ℕ → Type := Findist
 /-- Finite probability distribution  -/
 abbrev Δ : ℕ → Type := Delta
 
-
 /-- Single probability distribution -/
 def singleton : Findist 1 :=
     {p    := ![1],

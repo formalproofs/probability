@@ -122,8 +122,6 @@ theorem prob_atomic_omega {b : ℚ} (h : ℙ[X =ᵣ b // P] > 0) : ∃ω, X ω =
     by_contra!
     simp_all [𝕀, indicator]
 
-example {a b c : ℚ} (h1 : a ≤ b) (h2 : b < c) : a < c := by apply?
-
 theorem rv_le_step_lt_max (h0 : t < (FinRV.max P X)) : ∃q > t, (X ≤ᵣ t) = (X <ᵣ q) ∧ q ∈ (Finset.univ.image X) := by
      let 𝓧 := Finset.univ.image X
      let 𝓨 := 𝓧.filter (fun x ↦ x > t)
@@ -365,18 +363,26 @@ theorem prob_ge_eq_one : ℙ[X ≥ᵣ (FinRV.min P X) // P] = 1 := by rw [rv_ge_
 theorem prob_lt_min_eq_zero : ℙ[X <ᵣ (FinRV.min P X) // P] = 0 := by
     rw [prob_lt_of_ge, prob_ge_eq_one]; exact sub_self 1
 
+theorem prob_le_max_of_le_1 {t : ℚ} (h : ℙ[X ≤ᵣ t // P] < 1) : t < FinRV.max P X := by 
+       by_contra! hcontra
+       have h1 := prob_le_monotone (P := P) (le_refl X) hcontra
+       rw [prob_le_eq_one] at h1
+       exact false_of_lt_ge h h1
+
 section Rounding ---results for discrete probability distributions
 
 variable (P : Findist n) (X : FinRV n ℚ) (t : ℚ)
 
-theorem prob_le_step_lt_max (h: t < (FinRV.max P X)) : ∃q > t, ℙ[X ≤ᵣ t // P] = ℙ[X <ᵣ q // P] ∧ q ∈ (Finset.univ.image X) :=
+theorem prob_le_step_lt_max (h: t < (FinRV.max P X)) : 
+    ∃q > t, ℙ[X ≤ᵣ t // P] = ℙ[X <ᵣ q // P] ∧ q ∈ (Finset.univ.image X) :=
           let ⟨q, hq⟩ := rv_le_step_lt_max P X t h
           Exists.intro q ⟨hq.1, ⟨congrArg (probability P) hq.2.1, hq.2.2 ⟩⟩
 
-/-- similar to `prob_lt_epsi_eq_le_of_lt` but no precondition -/
+/-- similar to `prob_le_step_lt_max` but no precondition -/
 theorem prob_le_step_lt : ∃q > t,  ℙ[X ≤ᵣ t // P] = ℙ[X <ᵣ q // P] :=
       let ⟨q, hq⟩ := rv_le_step_lt X t P
       Exists.intro q ⟨hq.1, congrArg (probability P) hq.2⟩
+
 
 end Rounding 
 
