@@ -14,6 +14,9 @@ theorem false_of_le_gt {x y : ℚ} : x ≤ y → x > y → False :=
 theorem false_of_lt_ge {x y : ℚ} : x < y → x ≥ y → False :=
     fun h1 h2 => false_of_le_gt h2 h1
  
+theorem bool_ineq {a b : Bool} (h : a → b) : (a ≤ b) := h
+
+theorem bool_eq {a b : Bool} (h1 : a → b) (h2 : b → a) : a = b := Bool.le_antisymm h1 h2
 
 --------------------------- Findist ---------------------------------------------------------------
 
@@ -35,7 +38,6 @@ abbrev Delta : ℕ → Type := Findist
 
 /-- Finite probability distribution  -/
 abbrev Δ : ℕ → Type := Delta
-
 
 /-- Single probability distribution -/
 def singleton : Findist 1 :=
@@ -236,8 +238,9 @@ def FinRV.max [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β)
 
 variable {X : FinRV n ℚ}
 
-theorem rv_omega_le_max (P : Findist n) : ∀ω, X ω ≤ (FinRV.max P X) :=
-    by intro ω
+
+theorem rv_omega_le_max (P : Findist n) : ∀ω, X ω ≤ (FinRV.max P X) := by 
+       intro ω
        have h : X ω ∈ (Finset.image X Finset.univ) := Finset.mem_image_of_mem X (Finset.mem_univ ω)
        simpa using Finset.le_max' (Finset.image X Finset.univ) (X ω) h
 
