@@ -41,22 +41,22 @@ def FinVaR (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : ℚ :=
 
 variable {α : RiskLevel}
 
-theorem finvar_prob_lt_var_le_alpha : ℙ[X <ᵣ (FinVaR P X α) // P] ≤ α.val := by
-    unfold FinVaR; extract_lets 𝓧 𝓢 ne𝓢 
-    exact (Finset.mem_filter.mp  (Finset.max'_mem 𝓢 ne𝓢)).right
 
-theorem finvar_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR P X α) // P] > α.val := by
-    generalize h : (FinVaR P X α) = t
-    by_contra! hg
-    have hlt : t < (FinRV.max P X) := prob_le_max_of_le_1 (lt_of_le_of_lt hg (Set.Ico.coe_lt_one α)) 
-    obtain ⟨q, ⟨hqgt, hqp, hqin⟩⟩ := prob_le_step_lt_max P X t hlt
-    have hqt : t ≥ q  := by 
-      unfold FinVaR at h; extract_lets 𝓧 𝓢 ne𝓢 at h;
-      subst t 
-      rw [hqp] at hg 
-      have h2: q ∈ 𝓢 := Finset.mem_filter.mpr ⟨hqin, hg⟩
-      exact Finset.le_max' 𝓢 q h2 
-    exact false_of_lt_ge hqgt hqt 
+theorem finvar_prob_cond : ℙ[X <ᵣ (FinVaR P X α) // P] ≤ α.val ∧ α.val < ℙ[X ≤ᵣ (FinVaR P X α) // P]  := by
+    constructor
+    · unfold FinVaR; extract_lets 𝓧 𝓢 ne𝓢 
+      exact (Finset.mem_filter.mp  (Finset.max'_mem 𝓢 ne𝓢)).right
+    · generalize h : (FinVaR P X α) = t
+      by_contra! hg
+      have hlt : t < (FinRV.max P X) := prob_le_max_of_le_1 (lt_of_le_of_lt hg (Set.Ico.coe_lt_one α)) 
+      obtain ⟨q, ⟨hqgt, hqp, hqin⟩⟩ := prob_le_step_lt_max P X t hlt
+      have hqt : t ≥ q  := by 
+        unfold FinVaR at h; extract_lets 𝓧 𝓢 ne𝓢 at h;
+        subst t 
+        rw [hqp] at hg 
+        have h2: q ∈ 𝓢 := Finset.mem_filter.mpr ⟨hqin, hg⟩
+        exact Finset.le_max' 𝓢 q h2 
+      exact false_of_lt_ge hqgt hqt 
 
 notation "VaR[" X "//" P ", " α "]" => FinVaR P X α
 
@@ -81,16 +81,14 @@ theorem var_prob_cond : IsVaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ α
          obtain ⟨q,hq⟩ := prob_le_step_lt P X v
          have h3 : q ∈ QuantileLower P X α.val := by
             rw [hq.2,prob_lt_of_ge] at hc
-            suffices ℙ[X≥ᵣq//P] ≥ 1 - α.val from this
+            suffices ℙ[X≥ᵣq//P] ≥ 1 - α.val from this 
             linarith
          exact false_of_le_gt (h.2 h3) hq.1
      · intro h
-       unfold IsVaR
        constructor
-       · exact qsetlower_of_cond_lt ⟨le_of_lt h.2, h.1⟩
-       · unfold upperBounds
-         by_contra! hc
-         simp at hc
+       · exact qsetlower_of_cond_lt h.1
+       · by_contra! hc
+         simp [upperBounds] at hc
          obtain ⟨q, hq⟩ := hc
          have hu : ℙ[X ≤ᵣ v // P] ≤ α.val :=
             calc ℙ[X ≤ᵣ v // P] ≤  ℙ[X <ᵣ q // P] := prob_lt_le_monotone hq.2
@@ -98,8 +96,7 @@ theorem var_prob_cond : IsVaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ α
          exact false_of_lt_ge h.2 hu
 
 -- This is the main correctness proof
-theorem finvar_correct : IsVaR P X α (FinVaR P X α) :=
-    by rewrite[var_prob_cond]; exact ⟨finvar_prob_lt_var_le_alpha, finvar_prob_le_var_gt_alpha⟩
+theorem finvar_correct : IsVaR P X α (FinVaR P X α) := var_prob_cond.mpr finvar_prob_cond
 
 theorem varq_is_quantile : IsVaR_Q P X α v → IsQuantile P X α.val v :=
     fun h => by simp_all only [Set.mem_setOf_eq,IsVaR_Q,Quantile,IsGreatest]

@@ -68,13 +68,13 @@ theorem qset_of_cond_lt : ℙ[X ≤ᵣ q // P] ≥ α ∧ ℙ[ X <ᵣ q // P] �
        have h2 : ℙ[ X ≥ᵣ q // P] ≥ 1 - α := by rw [prob_ge_of_lt]; linarith
        exact qset_of_cond ⟨h1.1, h2⟩
 
-theorem qsetlower_of_cond : ℙ[X ≤ᵣ q // P] ≥ α ∧ ℙ[ X ≥ᵣ q // P] ≥ 1 - α → q ∈ QuantileLower P X α :=
+theorem qsetlower_of_cond : ℙ[ X ≥ᵣ q // P] ≥ 1 - α → q ∈ QuantileLower P X α :=
     by intro h; simp_all [QuantileLower, IsQuantileLower]
 
-theorem qsetlower_of_cond_lt : ℙ[X ≤ᵣ q // P] ≥ α ∧ ℙ[ X <ᵣ q // P] ≤ α → q ∈ QuantileLower P X α :=
+theorem qsetlower_of_cond_lt : ℙ[ X <ᵣ q // P] ≤ α → q ∈ QuantileLower P X α :=
     by intro h1
        have h2 : ℙ[X ≥ᵣ q // P] ≥ 1 - α := by rw [prob_ge_of_lt]; linarith
-       exact qsetlower_of_cond ⟨h1.1, h2⟩
+       exact qsetlower_of_cond  h2
 
 theorem quantile_implies_quantilelower : IsQuantile P X α v → IsQuantileLower P X α v :=
     by simp[IsQuantile, IsQuantileLower]
