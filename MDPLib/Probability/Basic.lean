@@ -1,4 +1,4 @@
-import Probability.Probability.Defs
+import MDPLib.Probability.Defs
 
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic

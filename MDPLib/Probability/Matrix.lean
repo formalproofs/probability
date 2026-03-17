@@ -1,4 +1,4 @@
-import Probability.Probability.Prelude
+import MDPLib.Probability.Prelude
 
 import Probability.Probability.Defs
 import Mathlib.Data.Matrix.Mul

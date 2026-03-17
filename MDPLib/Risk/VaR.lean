@@ -1,5 +1,5 @@
-import Probability.Probability.Basic
-import Probability.Probability.Quantile
+import MDPLib.Probability.Basic
+import MDPLib.Probability.Quantile
 import Mathlib.Data.EReal.Basic
 import Mathlib.Data.Set.Operations
 

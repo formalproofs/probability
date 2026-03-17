@@ -1,4 +1,4 @@
-import Probability.Probability.Basic
+import MDPLib.Probability.Basic
 import Mathlib.Data.EReal.Basic
 import Mathlib.Data.Set.Operations
 import Mathlib.Data.Fin.VecNotation
