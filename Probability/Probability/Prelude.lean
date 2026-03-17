@@ -79,47 +79,21 @@ theorem prod_eq_zero_of_nneg_dp_zero (hx : 0 ≤ x) (hy : 0 ≤ y) : x ⬝ᵥ y 
   simp_all [dotProduct]
   exact (Fintype.sum_eq_zero_iff_of_nonneg this).mp h
 
+theorem abs_pos_hom {a b : ℚ} (h : 0 ≤ a) : |a * b| = a * |b| := by 
+  rw [abs_mul, abs_of_nonneg h]
 
-theorem abs_dotProd_le_dotProd_abs(p x : Fin n → ℚ) (hp : ∀ i, 0 ≤ p i) :
-    |p ⬝ᵥ x| ≤ p ⬝ᵥ fun i => |x i| := by
-  classical
-  unfold dotProduct
-  -- Step 1: triangle inequality
-  have h1 :
-      |∑ i : Fin n, p i * x i|
-        ≤ ∑ i : Fin n, |p i * x i| := by
-    simpa using
-      Finset.abs_sum_le_sum_abs
-        (s := Finset.univ)
-        (f := fun i : Fin n => p i * x i)
-
-  -- Step 2: simplify absolute value of product
-  have h2 :
-      ∑ i : Fin n, |p i * x i|
-        = ∑ i : Fin n, p i * |x i| := by
-    refine Finset.sum_congr rfl ?_
-    intro i _
-    have hpi := hp i
-    have hpos : |p i| = p i := abs_of_nonneg hpi
-    calc
-      |p i * x i|
-          = |p i| * |x i| := by simp [abs_mul]
-      _   = p i * |x i| := by simp [hpos]
-
-  -- Step 3: combine
+theorem abs_dotProd_le_dotProd_abs(p x : Fin n → ℚ) (hp : ∀ i, 0 ≤ p i) : |p ⬝ᵥ x| ≤ p ⬝ᵥ fun i => |x i| := by
   calc
-    |∑ i : Fin n, p i * x i| ≤ ∑ i, |p i * x i| := h1
-    _ = ∑ i, p i * |x i| := h2
+    |∑ i : Fin n, p i * x i| ≤ ∑ i, |p i * x i| := Finset.abs_sum_le_sum_abs (fun i ↦ p i * x i) Finset.univ
+    _ = ∑ i, p i * |x i| := Finset.sum_congr rfl (fun i _ => abs_pos_hom (hp i))
     _ = p ⬝ᵥ fun i => |x i| := rfl
 
 theorem jensen_abs_uniform (x : Fin n → ℚ) (hn : 0 < n) :
-    |(fun _ : Fin n => (1 : ℚ) / n) ⬝ᵥ x|
-      ≤ (fun _ : Fin n => (1 : ℚ) / n) ⬝ᵥ fun i => |x i| := by
-  classical
+    |(fun _ : Fin n => (1 : ℚ) / n) ⬝ᵥ x| ≤ (fun _ : Fin n => (1 : ℚ) / n) ⬝ᵥ fun i => |x i| := by
   have hpos : 0 < (n : ℚ) := by exact_mod_cast hn
   have hnonneg : 0 ≤ (1 : ℚ) / n := by
     have := inv_pos.mpr hpos
-    simpa [one_div] using (le_of_lt this)
+    simp
   have hp : ∀ i : Fin n, 0 ≤ (1 : ℚ) / n := fun _ => hnonneg
   simpa using
     abs_dotProd_le_dotProd_abs
