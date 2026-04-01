@@ -29,9 +29,9 @@ theorem FinVarSet_nonempty (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : 
     · exact Finset.min'_mem (Finset.univ.image X) (rv_image_nonempty P X)
     · have h : ℙ[X <ᵣ xmin // P] = 0 := prob_lt_min_eq_zero
       rewrite [h]
-      exact α.2.1 
+      exact α.2.1
 
-/-- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
+/-- Value-at-Risk of X at level α: VaR_α(X) = max { t ∈ R | P[X < t] ≤ α }.
     If we assume 0 ≤ α < 1, then the "else 0" branch is never used. -/
 def FinVaR (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : ℚ :=
    let 𝓧 := Finset.univ.image X
@@ -42,21 +42,21 @@ def FinVaR (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : ℚ :=
 variable {α : RiskLevel}
 
 theorem finvar_prob_lt_var_le_alpha : ℙ[X <ᵣ (FinVaR P X α) // P] ≤ α.val := by
-    unfold FinVaR; extract_lets 𝓧 𝓢 ne𝓢 
+    unfold FinVaR; extract_lets 𝓧 𝓢 ne𝓢
     exact (Finset.mem_filter.mp  (Finset.max'_mem 𝓢 ne𝓢)).right
 
 theorem finvar_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR P X α) // P] > α.val := by
     generalize h : (FinVaR P X α) = t
     by_contra! hg
-    have hlt : t < (FinRV.max P X) := prob_le_max_of_le_1 (lt_of_le_of_lt hg (Set.Ico.coe_lt_one α)) 
+    have hlt : t < (FinRV.max P X) := prob_le_max_of_le_1 (lt_of_le_of_lt hg (Set.Ico.coe_lt_one α))
     obtain ⟨q, ⟨hqgt, hqp, hqin⟩⟩ := prob_le_step_lt_max P X t hlt
-    have hqt : t ≥ q  := by 
+    have hqt : t ≥ q  := by
       unfold FinVaR at h; extract_lets 𝓧 𝓢 ne𝓢 at h;
-      subst t 
-      rw [hqp] at hg 
+      subst t
+      rw [hqp] at hg
       have h2: q ∈ 𝓢 := Finset.mem_filter.mpr ⟨hqin, hg⟩
-      exact Finset.le_max' 𝓢 q h2 
-    exact false_of_lt_ge hqgt hqt 
+      exact Finset.le_max' 𝓢 q h2
+    exact false_of_lt_ge hqgt hqt
 
 notation "VaR[" X "//" P ", " α "]" => FinVaR P X α
 
@@ -74,7 +74,7 @@ theorem var_prob_cond : IsVaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ α
   by constructor
      · intro h
        constructor
-       · have h1 : 1 - ℙ[X<ᵣv//P] ≥ 1 - α.val := by 
+       · have h1 : 1 - ℙ[X<ᵣv//P] ≥ 1 - α.val := by
             simp_all [IsVaR,IsGreatest,QuantileLower,IsQuantileLower,prob_ge_of_lt]
          linarith
        · by_contra! hc
@@ -139,7 +139,7 @@ theorem isquantilelower_le_isquantile : IsCofinalFor (QuantileLower P X α.val) 
 theorem isquantile_le_isquantilelower : IsCofinalFor (Quantile P X α.val) (QuantileLower P X α.val) :=
     HasSubset.Subset.iscofinalfor quantile_subset_quantilelower
 
-theorem varq_eq_var : IsVaR_Q P X α v ↔ IsVaR P X α v := 
+theorem varq_eq_var : IsVaR_Q P X α v ↔ IsVaR P X α v :=
     ⟨fun h => ⟨varq_is_quantilelower h, (upperBounds_mono_of_isCofinalFor isquantilelower_le_isquantile) h.2⟩,
      fun h => ⟨var_is_quantile h, (upperBounds_mono_of_isCofinalFor isquantile_le_isquantilelower) h.2⟩⟩
 
@@ -170,5 +170,3 @@ theorem var_positive_homog (hc : c > 0) : FinVaR P (fun ω => c * X ω) α = c *
 end VaR_properties
 
 end Risk
-
-
