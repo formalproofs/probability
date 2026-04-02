@@ -31,13 +31,25 @@ theorem FinVarSet_nonempty (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : 
       rewrite [h]
       exact α.2.1
 
-/-- Value-at-Risk of X at level α: VaR_α(X) = max { t ∈ R | P[X < t] ≤ α }.
-    If we assume 0 ≤ α < 1, then the "else 0" branch is never used. -/
+/-- Value-at-Risk of X at level α: VaR_α(X) = max { t ∈ R | P[X < t] ≤ α } -/
 def FinVaR (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : ℚ :=
    let 𝓧 := Finset.univ.image X
    let 𝓢 := 𝓧.filter (fun t ↦ ℙ[X <ᵣ t // P] ≤ α.val)
    have h : 𝓢.Nonempty := FinVarSet_nonempty P X α
    𝓢.max' h
+
+
+/- just messing around here, feel free to change, delete, etc. -/
+--note, we can make a noncomputable section instead of individually marking them
+
+noncomputable def cdf_lt_R (P : Findist n) (X : FinRV n ℝ) (t : ℝ) : ℝ := ℙ[X <ᵣ t // P]
+
+noncomputable def FinVaR_R (P : Findist n) (X : FinRV n ℝ) (α : RiskLevel) : ℝ :=
+  sSup { t : ℝ | cdf_lt_R P X t ≤ α.val }
+
+
+
+/- ------------ -/
 
 variable {α : RiskLevel}
 
